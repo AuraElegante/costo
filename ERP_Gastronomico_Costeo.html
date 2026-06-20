@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ERP Gastronómico — Costeo</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+<style>
+  :root {
+    --primary:#1a1a2e;--secondary:#16213e;--accent:#e94560;--accent2:#f5a623;
+    --surface:#0f3460;--light-bg:#f8f9fc;--border:#e2e8f0;
+    --text-main:#1e293b;--text-muted:#64748b;
+    --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--sidebar-w:265px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--light-bg);color:var(--text-main);overflow-x:hidden}
+
+  /* LOGIN */
+  #login-screen{min-height:100vh;background:linear-gradient(135deg,var(--primary) 0%,var(--surface) 60%,#1a1a4e 100%);display:flex;align-items:center;justify-content:center}
+  .login-card{background:rgba(255,255,255,.06);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
+  .login-logo{font-size:3rem;margin-bottom:8px}
+  .login-title{color:#fff;font-size:1.5rem;font-weight:700;margin-bottom:4px}
+  .login-sub{color:rgba(255,255,255,.5);font-size:.85rem;margin-bottom:32px}
+  .login-card .form-control{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:16px}
+  .login-card .form-control::placeholder{color:rgba(255,255,255,.35)}
+  .login-card .form-control:focus{background:rgba(255,255,255,.12);border-color:var(--accent2);box-shadow:0 0 0 3px rgba(245,166,35,.2);color:#fff}
+  .btn-login{background:linear-gradient(135deg,var(--accent),#c0392b);border:none;color:#fff;border-radius:10px;padding:13px;width:100%;font-weight:600;font-size:1rem;transition:transform .15s,box-shadow .15s}
+  .btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(233,69,96,.4);color:#fff}
+  .login-error{color:#ff6b8a;font-size:.85rem;margin-top:10px;display:none}
+
+  /* APP */
+  #app{display:none;min-height:100vh}
+
+  /* SIDEBAR */
+  #sidebar{position:fixed;top:0;left:0;height:100vh;width:var(--sidebar-w);background:var(--primary);display:flex;flex-direction:column;z-index:100;overflow-y:auto;transition:transform .3s}
+  .sidebar-brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .sidebar-brand-icon{font-size:1.8rem}
+  .sidebar-brand-name{color:#fff;font-size:.95rem;font-weight:700;line-height:1.2}
+  .sidebar-brand-sub{color:var(--accent2);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase}
+  .nav-section{padding:14px 12px 4px;color:rgba(255,255,255,.3);font-size:.63rem;text-transform:uppercase;letter-spacing:.1em}
+  .sidebar-nav{list-style:none;padding:0 8px}
+  .sidebar-nav li a{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:10px;margin-bottom:2px;color:rgba(255,255,255,.6);text-decoration:none;font-size:.85rem;transition:all .2s}
+  .sidebar-nav li a:hover,.sidebar-nav li a.active{background:rgba(255,255,255,.08);color:#fff}
+  .sidebar-nav li a.active{background:var(--accent);color:#fff}
+  .sidebar-nav li a .bi{font-size:1rem;opacity:.8}
+  .sidebar-user{margin-top:auto;padding:14px;border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+  .user-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem;flex-shrink:0}
+  .user-name{color:#fff;font-size:.78rem;font-weight:600}
+  .user-role{color:rgba(255,255,255,.4);font-size:.68rem}
+  .btn-logout{background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;margin-left:auto;transition:color .2s}
+  .btn-logout:hover{color:var(--accent)}
+
+  /* MAIN */
+  #main{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column}
+  .topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+  .topbar-title{font-size:1rem;font-weight:700;color:var(--text-main)}
+  .content{padding:26px;flex:1}
+
+  /* CARDS */
+  .card{border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  .card-header-custom{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .card-title-lg{font-size:.95rem;font-weight:700;color:var(--text-main)}
+  .card-body-p{padding:20px}
+
+  /* KPI */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:22px}
+  .kpi-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-color,var(--accent))}
+  .kpi-icon{font-size:1.4rem;color:var(--kpi-color,var(--accent));margin-bottom:6px}
+  .kpi-value{font-size:1.5rem;font-weight:800;color:var(--text-main);line-height:1}
+  .kpi-label{font-size:.72rem;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+
+  /* BADGES */
+  .badge-soft{padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600}
+  .badge-success{background:#d1fae5;color:#065f46}
+  .badge-warning{background:#fef3c7;color:#92400e}
+  .badge-danger{background:#fee2e2;color:#991b1b}
+  .badge-primary{background:#dbeafe;color:#1e40af}
+  .badge-purple{background:#ede9fe;color:#5b21b6}
+
+  /* TABLES */
+  .table-clean{width:100%;border-collapse:collapse}
+  .table-clean th{background:var(--light-bg);color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;padding:9px 13px;border-bottom:1px solid var(--border);font-weight:600}
+  .table-clean td{padding:10px 13px;border-bottom:1px solid #f1f5f9;font-size:.855rem;vertical-align:middle}
+  .table-clean tr:last-child td{border-bottom:none}
+  .table-clean tr:hover td{background:#f8fafc}
+
+  /* FORMULA BOX */
+  .formula-box{background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:11px 15px;font-size:.78rem;color:#78350f;margin-top:12px}
+  .formula-box .formula-title{font-weight:700;margin-bottom:4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+
+  /* FORMS */
+  .form-label{font-size:.78rem;font-weight:600;color:var(--text-muted);margin-bottom:3px}
+  .form-control,.form-select{border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:.855rem;transition:border-color .2s,box-shadow .2s}
+  .form-control:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(233,69,96,.1);outline:none}
+
+  /* BUTTONS */
+  .btn-primary-custom{background:var(--accent);border:none;color:#fff;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+  .btn-primary-custom:hover{background:#c0392b;transform:translateY(-1px)}
+  .btn-secondary-custom{background:var(--light-bg);border:1px solid var(--border);color:var(--text-main);padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+  .btn-secondary-custom:hover{background:#e2e8f0}
+  .btn-danger-custom{background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+  .btn-danger-custom:hover{background:#fecaca}
+  .btn-icon{background:none;border:none;cursor:pointer;padding:5px;border-radius:6px;transition:background .2s}
+  .btn-icon:hover{background:var(--light-bg)}
+
+  /* ALERTS */
+  .alert-stock{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:9px 13px;font-size:.78rem;color:#991b1b;display:flex;align-items:center;gap:8px}
+
+  /* PRICE */
+  .price-stack{display:grid;gap:10px}
+  .price-row{background:var(--light-bg);border-radius:10px;padding:12px 15px;display:flex;justify-content:space-between;align-items:center}
+  .price-row.highlight{background:linear-gradient(135deg,var(--primary),var(--surface));color:#fff}
+  .price-row.highlight .price-label{color:rgba(255,255,255,.7)}
+  .price-label{font-size:.76rem;color:var(--text-muted);font-weight:500}
+  .price-val{font-size:1.1rem;font-weight:800}
+
+  /* MODAL */
+  .modal-backdrop-custom{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .modal-box{background:#fff;border-radius:16px;padding:26px;width:90%;max-width:580px;max-height:90vh;overflow-y:auto}
+  .modal-title{font-size:1.05rem;font-weight:700;margin-bottom:18px}
+
+  /* MERMA CATEGORY CHIPS */
+  .merma-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+  .merma-cat-card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:#fff;cursor:pointer;transition:all .2s;position:relative}
+  .merma-cat-card:hover{border-color:var(--accent2);box-shadow:0 2px 8px rgba(245,166,35,.15)}
+  .merma-cat-card.active-cat{border-color:var(--accent);box-shadow:0 2px 8px rgba(233,69,96,.15)}
+  .merma-cat-icon{font-size:1.6rem;margin-bottom:6px}
+  .merma-cat-name{font-size:.85rem;font-weight:700;color:var(--text-main)}
+  .merma-cat-pct{font-size:1.2rem;font-weight:800;color:var(--accent)}
+  .merma-cat-desc{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+
+  /* PROGRESS */
+  .progress-bar-custom{background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:99px;transition:width .5s}
+
+  /* UTIL */
+  .text-accent{color:var(--accent)}.text-accent2{color:var(--accent2)}
+  .text-success-c{color:var(--success)}.text-danger-c{color:var(--danger)}
+  .hidden{display:none!important}
+  .divider{border-top:1px solid var(--border);margin:14px 0}
+
+  /* EMPTY STATE */
+  .empty-state{text-align:center;padding:48px 20px;color:var(--text-muted)}
+  .empty-state .empty-icon{font-size:3rem;margin-bottom:12px;opacity:.3}
+  .empty-state p{font-size:.9rem}
+
+  /* SECTION TABS */
+  .section-tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:22px}
+  .section-tab{padding:9px 16px;font-size:.83rem;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none}
+  .section-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+  /* KARDEX */
+  .kardex-table th{background:var(--primary);color:#fff;font-size:.7rem}
+
+  @media(max-width:768px){
+    #sidebar{transform:translateX(-100%)}
+    #sidebar.open{transform:translateX(0)}
+    #main{margin-left:0}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">🍽️</div>
+    <div class="login-title">ERP Gastronómico</div>
+    <div class="login-sub">Sistema de Costeo · Rubro Gastronómico</div>
+    <input type="text" id="inp-user" class="form-control" placeholder="Usuario" autocomplete="off"/>
+    <input type="password" id="inp-pass" class="form-control" placeholder="Contraseña"/>
+    <button class="btn-login" onclick="doLogin()"><i class="bi bi-shield-lock-fill me-2"></i>Ingresar al Sistema</button>
+    <div class="login-error" id="login-error"><i class="bi bi-exclamation-circle"></i> Usuario o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🍽️</div>
+      <div class="sidebar-brand-name" id="sb-empresa-name">Mi Negocio Gastronómico</div>
+      <div class="sidebar-brand-sub">ERP · Costeo Gastronómico</div>
+    </div>
+
+    <div class="nav-section">Principal</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showModule('dashboard')" id="nav-dashboard" class="active"><i class="bi bi-grid-1x2"></i> Dashboard</a></li>
+    </ul>
+
+    <div class="nav-section">Maestros</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showModule('config')" id="nav-config"><i class="bi bi-sliders"></i> Configuración</a></li>
+      <li><a href="#" onclick="showModule('materias')" id="nav-materias"><i class="bi bi-box-seam"></i> Materias Primas</a></li>
+      <li><a href="#" onclick="showModule('recetas')" id="nav-recetas"><i class="bi bi-journal-text"></i> Recetario</a></li>
+    </ul>
+
+    <div class="nav-section">Planificación</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showModule('ventas')" id="nav-ventas"><i class="bi bi-graph-up-arrow"></i> Proyección de Ventas</a></li>
+      <li><a href="#" onclick="showModule('requerimientos')" id="nav-requerimientos"><i class="bi bi-list-check"></i> Requerimientos MRP</a></li>
+    </ul>
+
+    <div class="nav-section">Costeo</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showModule('mod')" id="nav-mod"><i class="bi bi-people"></i> Mano de Obra (MOD)</a></li>
+      <li><a href="#" onclick="showModule('cif')" id="nav-cif"><i class="bi bi-building"></i> Costos Indirectos (CIF)</a></li>
+      <li><a href="#" onclick="showModule('costeo')" id="nav-costeo"><i class="bi bi-calculator"></i> Hoja de Costeo</a></li>
+      <li><a href="#" onclick="showModule('precios')" id="nav-precios"><i class="bi bi-tag"></i> Fijación de Precios</a></li>
+    </ul>
+
+    <div class="nav-section">Inventario</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showModule('kardex')" id="nav-kardex"><i class="bi bi-card-list"></i> Kardex PEPS</a></li>
+      <li><a href="#" onclick="showModule('mermas')" id="nav-mermas"><i class="bi bi-exclamation-triangle"></i> Control de Mermas</a></li>
+    </ul>
+
+    <div class="nav-section">Ventas</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showModule('pedidos')" id="nav-pedidos"><i class="bi bi-bag-check"></i> Pedidos</a></li>
+      <li><a href="#" onclick="showModule('comprobantes')" id="nav-comprobantes"><i class="bi bi-receipt"></i> Boletas y Facturas</a></li>
+    </ul>
+
+    <div class="nav-section">Reportes</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showModule('reportes')" id="nav-reportes"><i class="bi bi-file-earmark-bar-graph"></i> Reportes Gerenciales</a></li>
+    </ul>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar-text">?</div>
+      <div>
+        <div class="user-name" id="user-display-name">Usuario</div>
+        <div class="user-role">Acceso completo</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="Cerrar sesión"><i class="bi bi-box-arrow-right"></i></button>
+    </div>
+  </nav>
+
+  <div id="main">
+    <div class="topbar">
+      <div class="d-flex align-items-center gap-3">
+        <button class="btn-icon d-md-none" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="bi bi-list fs-5"></i></button>
+        <span class="topbar-title" id="topbar-title">Dashboard</span>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <span class="badge-soft badge-success"><i class="bi bi-circle-fill me-1" style="font-size:.4rem"></i>Sistema activo</span>
+        <button class="btn-danger-custom" onclick="confirmReset()"><i class="bi bi-trash3"></i> Limpiar todo</button>
+      </div>
+    </div>
+    <div class="content" id="module-content"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop-custom hidden" id="generic-modal">
+  <div class="modal-box" id="generic-modal-box">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="modal-title" id="generic-modal-title">Modal</div>
+      <button class="btn-icon" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div id="generic-modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  CATEGORÍAS DE MERMA GASTRONÓMICA
+// ══════════════════════════════════════════
+const MERMA_CATEGORIAS = [
+  { id:'verduras', icon:'🥬', nombre:'Verduras y Hortalizas', pct:20, desc:'Espinaca, lechuga, cebolla, tomate, etc.' },
+  { id:'frutas',   icon:'🍊', nombre:'Frutas', pct:15, desc:'Limón, naranja, mango, plátano, etc.' },
+  { id:'tuberculos', icon:'🥔', nombre:'Tubérculos y Raíces', pct:25, desc:'Papa, camote, yuca, zanahoria, etc.' },
+  { id:'carnes',   icon:'🥩', nombre:'Carnes Rojas', pct:18, desc:'Res, cerdo, cordero, vísceras.' },
+  { id:'aves',     icon:'🍗', nombre:'Aves', pct:30, desc:'Pollo, pavo, pato, menudencias.' },
+  { id:'pescados', icon:'🐟', nombre:'Pescados', pct:45, desc:'Filete de pescado fresco, entero.' },
+  { id:'mariscos', icon:'🦐', nombre:'Mariscos y Crustáceos', pct:35, desc:'Camarones, pulpo, calamar, ostras.' },
+  { id:'lacteos',  icon:'🧀', nombre:'Lácteos y Huevos', pct:5, desc:'Leche, queso, crema, huevos.' },
+  { id:'granos',   icon:'🌾', nombre:'Cereales y Granos', pct:3, desc:'Arroz, maíz, frejol, lentejas.' },
+  { id:'especias', icon:'🌿', nombre:'Especias y Hierbas', pct:30, desc:'Perejil, cilantro, albahaca, ajo.' },
+  { id:'postres',  icon:'🍮', nombre:'Insumos de Pastelería', pct:5, desc:'Azúcar, harina, mantequilla, chocolate.' },
+  { id:'bebidas',  icon:'🥤', nombre:'Bebidas e Infusiones', pct:8, desc:'Jugos, tisanas, bases de bebidas.' },
+  { id:'aceites',  icon:'🫙', nombre:'Aceites y Grasas', pct:2, desc:'Aceite vegetal, manteca, margarina.' },
+  { id:'custom',   icon:'⚙️', nombre:'Personalizado', pct:10, desc:'Define tu propio porcentaje de merma.' },
+];
+
+// ══════════════════════════════════════════
+//  STATE / DB
+// ══════════════════════════════════════════
+const DB = {
+  config: {
+    empresa:'Mi Negocio Gastronómico', ruc:'', moneda:'S/', igv:18,
+    pos_rate:3.44, merma_default:5, merma_categoria:'postres',
+    jornada:8, dias_laborables:26,
+  },
+  materias:[], recetas:[], ventas:[], mod_trabajadores:[], cif_items:[],
+  kardex:{},
+};
+
+function saveDB(){ try{ localStorage.setItem('erp_gastro_v2', JSON.stringify(DB)); }catch(e){} }
+function loadDB(){
+  try{
+    const s=localStorage.getItem('erp_gastro_v2');
+    if(s){ const d=JSON.parse(s); Object.assign(DB,d); }
+  }catch(e){}
+}
+function confirmReset(){
+  if(!confirm('⚠️ ¿Eliminar TODOS los datos y empezar desde cero?\nEsta acción no se puede deshacer.'))return;
+  localStorage.removeItem('erp_gastro_v2');
+  DB.materias=[]; DB.recetas=[]; DB.ventas=[]; DB.mod_trabajadores=[];
+  DB.cif_items=[]; DB.kardex={};
+  DB.config={ empresa:'Mi Negocio Gastronómico',ruc:'',moneda:'S/',igv:18,pos_rate:3.44,merma_default:5,merma_categoria:'postres',jornada:8,dias_laborables:26 };
+  saveDB();
+  document.getElementById('sb-empresa-name').textContent=DB.config.empresa;
+  showModule('dashboard');
+  alert('✅ Sistema limpiado correctamente. Puedes empezar desde cero.');
+}
+
+// ══════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════
+const _U=[{u:'vaachang',p:'SpiderPig123',n:'Víctor Armas',i:'VA',r:'Administrador'}];
+let _session=null;
+function doLogin(){
+  const u=document.getElementById('inp-user').value.trim();
+  const p=document.getElementById('inp-pass').value;
+  const found=_U.find(x=>x.u===u&&x.p===p);
+  if(found){
+    _session=found;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('user-display-name').textContent=found.n;
+    document.getElementById('user-avatar-text').textContent=found.i;
+    loadDB();
+    document.getElementById('sb-empresa-name').textContent=DB.config.empresa;
+    showModule('dashboard');
+  } else {
+    document.getElementById('login-error').style.display='block';
+  }
+}
+function doLogout(){
+  _session=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('inp-user').value='';
+  document.getElementById('inp-pass').value='';
+  document.getElementById('login-error').style.display='none';
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+// ══════════════════════════════════════════
+//  ROUTER
+// ══════════════════════════════════════════
+const MODULES={
+  dashboard:{title:'Dashboard Gerencial',render:renderDashboard},
+  config:{title:'Configuración General',render:renderConfig},
+  materias:{title:'Maestro de Materias Primas',render:renderMaterias},
+  recetas:{title:'Recetario de Producción',render:renderRecetas},
+  ventas:{title:'Proyección de Ventas',render:renderVentas},
+  requerimientos:{title:'Requerimientos MRP',render:renderRequerimientos},
+  mod:{title:'Mano de Obra Directa (MOD)',render:renderMOD},
+  cif:{title:'Costos Indirectos de Fabricación (CIF)',render:renderCIF},
+  costeo:{title:'Hoja de Costeo por Producto',render:renderCosteo},
+  precios:{title:'Fijación de Precios y Rentabilidad',render:renderPrecios},
+  kardex:{title:'Kardex PEPS (FIFO)',render:renderKardex},
+  mermas:{title:'Control de Mermas por Categoría',render:renderMermas},
+};
+function showModule(key){
+  const m=MODULES[key]; if(!m)return;
+  document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
+  const nav=document.getElementById('nav-'+key);
+  if(nav)nav.classList.add('active');
+  document.getElementById('topbar-title').textContent=m.title;
+  document.getElementById('module-content').innerHTML=m.render();
+  if(typeof window['__init_'+key]==='function')window['__init_'+key]();
+}
+
+// ══════════════════════════════════════════
+//  MODAL
+// ══════════════════════════════════════════
+function openModal(title,bodyHTML){
+  document.getElementById('generic-modal-title').textContent=title;
+  document.getElementById('generic-modal-body').innerHTML=bodyHTML;
+  document.getElementById('generic-modal').classList.remove('hidden');
+}
+function closeModal(){ document.getElementById('generic-modal').classList.add('hidden'); }
+
+// ══════════════════════════════════════════
+//  CÁLCULOS CORE
+// ══════════════════════════════════════════
+function getMermaCategoria(){
+  const cat=MERMA_CATEGORIAS.find(c=>c.id===DB.config.merma_categoria);
+  return cat||MERMA_CATEGORIAS[0];
+}
+function getMermaPct(){ return DB.config.merma_default; }
+
+function calcCostoMOD(){
+  const factor_anual=12+2+1+1; const ess=0.09;
+  let total=0;
+  DB.mod_trabajadores.forEach(w=>{
+    const base=w.sueldo*w.n;
+    total+=(base*factor_anual+base*12*ess)/12;
+  });
+  return total;
+}
+function calcCIFTotal(){ return DB.cif_items.reduce((s,c)=>s+c.monto,0); }
+function calcUnidadesTotales(){ return DB.ventas.reduce((s,v)=>s+v.cantidad,0); }
+
+function calcCostoMPD(receta_id,cantidad,merma_pct){
+  const rec=DB.recetas.find(r=>r.id===receta_id); if(!rec)return 0;
+  let total=0;
+  (rec.ingredientes||[]).forEach(ing=>{
+    const mp=getMat(ing.materia_id);
+    if(mp.id){ total+=ing.cantidad*cantidad*(1+merma_pct/100)*mp.costo; }
+  });
+  return total;
+}
+function calcCostoUnitario(receta_id,cantidad_proyectada,merma_pct){
+  const total_und=calcUnidadesTotales()||1;
+  const prop=cantidad_proyectada/total_und;
+  const mpd=calcCostoMPD(receta_id,cantidad_proyectada,merma_pct);
+  const mod=calcCostoMOD()*prop;
+  const cif=calcCIFTotal()*prop;
+  const total=mpd+mod+cif;
+  return {mpd,mod,cif,total,unitario:total/(cantidad_proyectada||1)};
+}
+function calcPrecios(costo_unitario,rentabilidad_pct){
+  const rent=rentabilidad_pct/100;
+  const valor_venta=costo_unitario/(1-rent);
+  const igv=DB.config.igv/100;
+  const precio_venta=valor_venta*(1+igv);
+  const pos_rate=DB.config.pos_rate/100;
+  const pos_igv=pos_rate*(1+igv);
+  return {
+    costo_unit:costo_unitario, valor_venta,
+    igv_monto:valor_venta*igv, precio_venta,
+    comision_pos:precio_venta*pos_igv,
+    precio_pos:precio_venta*(1+pos_igv),
+    utilidad_unit:valor_venta-costo_unitario,
+    utilidad_pct:(valor_venta-costo_unitario)/valor_venta*100
+  };
+}
+function fmt(n){ return 'S/ '+(n||0).toFixed(2); }
+function fmtN(n){ return (n||0).toFixed(3); }
+function pct(n){ return (n||0).toFixed(1)+'%'; }
+function uid(){ return '_'+Math.random().toString(36).slice(2,9); }
+function getMat(id){ return DB.materias.find(m=>m.id===id)||{}; }
+function getRec(id){ return DB.recetas.find(r=>r.id===id)||{}; }
+
+// ══════════════════════════════════════════
+//  EMPTY STATE HELPER
+// ══════════════════════════════════════════
+function emptyState(icon,msg,btnLabel,btnFn){
+  return `<div class="empty-state"><div class="empty-icon">${icon}</div><p class="mb-3">${msg}</p>${btnLabel?`<button class="btn-primary-custom" onclick="${btnFn}"><i class="bi bi-plus"></i> ${btnLabel}</button>`:''}</div>`;
+}
+
+// ══════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════
+function renderDashboard(){
+  const total_und=calcUnidadesTotales();
+  const mod_mes=calcCostoMOD();
+  const cif_mes=calcCIFTotal();
+  let costo_total=0,utilidad_total=0;
+  const merma=getMermaPct();
+  DB.ventas.forEach(v=>{
+    const c=calcCostoUnitario(v.receta_id,v.cantidad,merma);
+    const p=calcPrecios(c.unitario,35);
+    costo_total+=c.total;
+    utilidad_total+=(p.valor_venta-c.unitario)*v.cantidad;
+  });
+  const alertas=DB.materias.filter(m=>m.stock<=m.stock_min);
+  const catMerma=getMermaCategoria();
+
+  const kpis=[
+    {icon:'bi-boxes',label:'Unidades Proyectadas',val:total_und.toLocaleString(),color:'#3b82f6'},
+    {icon:'bi-currency-dollar',label:'Costo Total Producción',val:fmt(costo_total),color:'#ef4444'},
+    {icon:'bi-cash-stack',label:'Utilidad Esperada (35%)',val:fmt(utilidad_total),color:'#10b981'},
+    {icon:'bi-people',label:'MOD Mensual',val:fmt(mod_mes),color:'#f59e0b'},
+    {icon:'bi-building',label:'CIF Mensual',val:fmt(cif_mes),color:'#8b5cf6'},
+    {icon:'bi-exclamation-triangle',label:'Alertas Stock',val:alertas.length,color:alertas.length>0?'#ef4444':'#10b981'},
+  ];
+  let kpiHTML=kpis.map(k=>`<div class="kpi-card" style="--kpi-color:${k.color}"><div class="kpi-icon"><i class="bi ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
+
+  if(DB.ventas.length===0){
+    return `<div class="kpi-grid">${kpiHTML}</div>
+    <div class="card"><div class="card-body-p">${emptyState('🍽️','El sistema está listo. Comienza configurando tu empresa, luego agrega materias primas, recetas y proyección de ventas.','Ir a Configuración',"showModule('config')")}</div></div>`;
+  }
+
+  let rows=DB.ventas.map(v=>{
+    const c=calcCostoUnitario(v.receta_id,v.cantidad,merma);
+    const p=calcPrecios(c.unitario,35);
+    return `<tr><td><strong>${v.producto}</strong></td><td class="text-end">${v.cantidad.toLocaleString()}</td><td class="text-end">${fmt(c.unitario)}</td><td class="text-end">${fmt(p.valor_venta)}</td><td class="text-end text-success-c fw-bold">${fmt(p.utilidad_unit)}</td><td class="text-end"><span class="badge-soft badge-success">${pct(p.utilidad_pct)}</span></td></tr>`;
+  }).join('');
+
+  let alertaHTML=alertas.length>0?`<div class="mb-4">${alertas.map(a=>`<div class="alert-stock mb-2"><i class="bi bi-exclamation-triangle-fill"></i> <strong>${a.nombre}</strong>: Stock ${a.stock} ${a.unidad} — Mínimo: ${a.stock_min}</div>`).join('')}</div>`:'';
+
+  return `${alertaHTML}
+  <div class="kpi-grid">${kpiHTML}</div>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-bar-chart me-2"></i>Rentabilidad por Producto</span>
+          <span class="badge-soft badge-purple">${catMerma.icon} Merma: ${catMerma.nombre} ${merma}%</span>
+        </div>
+        <div style="overflow-x:auto"><table class="table-clean"><thead><tr><th>Producto</th><th class="text-end">Und.</th><th class="text-end">C. Unitario</th><th class="text-end">Valor Venta</th><th class="text-end">Utilidad</th><th class="text-end">Margen</th></tr></thead><tbody>${rows}</tbody></table></div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-pie-chart me-2"></i>Estructura de Costos</span></div>
+        <div class="card-body-p">
+          ${DB.ventas.map(v=>{
+            const c=calcCostoUnitario(v.receta_id,v.cantidad,merma);
+            const pM=c.total?(c.mpd/c.total*100):0,pO=c.total?(c.mod/c.total*100):0,pC=c.total?(c.cif/c.total*100):0;
+            return `<div class="mb-3"><div class="d-flex justify-content-between mb-1"><span style="font-size:.8rem;font-weight:600">${v.producto}</span><span style="font-size:.73rem;color:var(--text-muted)">${fmt(c.total)}</span></div><div class="progress-bar-custom mb-1"><div class="progress-fill" style="width:${pM}%;background:#3b82f6"></div></div><div class="d-flex gap-3" style="font-size:.68rem;color:var(--text-muted)"><span style="color:#3b82f6">● MPD ${pM.toFixed(0)}%</span><span style="color:#f59e0b">● MOD ${pO.toFixed(0)}%</span><span style="color:#8b5cf6">● CIF ${pC.toFixed(0)}%</span></div></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════
+function renderConfig(){
+  const C=DB.config;
+  const catMerma=getMermaCategoria();
+  return `<div class="card">
+    <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-sliders me-2"></i>Parámetros del Sistema</span></div>
+    <div class="card-body-p">
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">Nombre de la Empresa</label><input class="form-control" id="cf-empresa" value="${C.empresa}"/></div>
+        <div class="col-md-6"><label class="form-label">RUC</label><input class="form-control" id="cf-ruc" value="${C.ruc}" placeholder="20XXXXXXXXX"/></div>
+        <div class="col-md-4"><label class="form-label">IGV (%)</label><input class="form-control" type="number" id="cf-igv" value="${C.igv}"/></div>
+        <div class="col-md-4"><label class="form-label">Comisión POS (%)</label><input class="form-control" type="number" id="cf-pos" value="${C.pos_rate}" step="0.01"/></div>
+        <div class="col-md-4"><label class="form-label">Jornada (horas/día)</label><input class="form-control" type="number" id="cf-jornada" value="${C.jornada}"/></div>
+        <div class="col-md-6"><label class="form-label">Días Laborables / Mes</label><input class="form-control" type="number" id="cf-dias" value="${C.dias_laborables}"/></div>
+        <div class="col-12"><button class="btn-primary-custom" onclick="saveConfig()"><i class="bi bi-save"></i> Guardar Configuración</button></div>
+      </div>
+      <div class="formula-box mt-4">
+        <div class="formula-title">📐 Fórmulas del sistema</div>
+        <strong>Valor de Venta</strong> = Costo Unitario ÷ (1 − % Rentabilidad) &nbsp;|&nbsp;
+        <strong>Precio de Venta</strong> = VV × (1 + IGV%) &nbsp;|&nbsp;
+        <strong>Precio POS</strong> = PV × (1 + (POS% × (1 + IGV%)))
+      </div>
+    </div>
+  </div>`;
+}
+function saveConfig(){
+  DB.config.empresa=document.getElementById('cf-empresa').value;
+  DB.config.ruc=document.getElementById('cf-ruc').value;
+  DB.config.igv=+document.getElementById('cf-igv').value;
+  DB.config.pos_rate=+document.getElementById('cf-pos').value;
+  DB.config.jornada=+document.getElementById('cf-jornada').value;
+  DB.config.dias_laborables=+document.getElementById('cf-dias').value;
+  saveDB();
+  document.getElementById('sb-empresa-name').textContent=DB.config.empresa;
+  alert('✅ Configuración guardada.');
+}
+
+// ══════════════════════════════════════════
+//  MATERIAS PRIMAS
+// ══════════════════════════════════════════
+function renderMaterias(){
+  if(DB.materias.length===0){
+    return `<div class="d-flex justify-content-end mb-4"><button class="btn-primary-custom" onclick="newMateria()"><i class="bi bi-plus"></i> Nueva Materia Prima</button></div><div class="card"><div class="card-body-p">${emptyState('📦','No hay materias primas registradas aún.','Agregar primera materia prima','newMateria()')}</div></div>`;
+  }
+  const alertas=DB.materias.filter(m=>m.stock<=m.stock_min);
+  const val_total=DB.materias.reduce((s,m)=>s+m.stock*m.costo,0);
+  let rows=DB.materias.map(m=>{
+    const st=m.stock<=m.stock_min?'badge-danger':m.stock<=m.stock_min*1.5?'badge-warning':'badge-success';
+    const sl=m.stock<=m.stock_min?'Bajo':m.stock<=m.stock_min*1.5?'Alerta':'OK';
+    return `<tr><td><code style="font-size:.73rem">${m.codigo}</code></td><td><strong>${m.nombre}</strong></td><td>${m.unidad}</td><td class="text-end">${fmt(m.costo)}</td><td>${m.proveedor||'—'}</td><td class="text-end"><strong>${m.stock}</strong></td><td class="text-end">${m.stock_min}</td><td><span class="badge-soft ${st}">${sl}</span></td><td class="text-end">${fmt(m.stock*m.costo)}</td><td>
+      <button class="btn-icon text-accent" onclick="editMateria('${m.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+      <button class="btn-icon" style="color:#3b82f6" onclick="movMateria('${m.id}','entrada')" title="Entrada"><i class="bi bi-box-arrow-in-down"></i></button>
+      <button class="btn-icon" style="color:#ef4444" onclick="movMateria('${m.id}','salida')" title="Salida"><i class="bi bi-box-arrow-up"></i></button>
+      <button class="btn-icon" style="color:#991b1b" onclick="delMateria('${m.id}')" title="Eliminar"><i class="bi bi-trash3"></i></button>
+    </td></tr>`;
+  }).join('');
+  return `<div class="d-flex justify-content-between align-items-center mb-3"><div style="font-size:.83rem;color:var(--text-muted)">Valorización: <strong>${fmt(val_total)}</strong> · ${alertas.length} alerta(s)</div><button class="btn-primary-custom" onclick="newMateria()"><i class="bi bi-plus"></i> Nueva Materia Prima</button></div>
+  <div class="card" style="overflow-x:auto"><table class="table-clean"><thead><tr><th>Código</th><th>Nombre</th><th>U.M.</th><th class="text-end">Costo</th><th>Proveedor</th><th class="text-end">Stock</th><th class="text-end">Mín.</th><th>Estado</th><th class="text-end">Valor</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function newMateria(){ openModal('Nueva Materia Prima',formMateria()); }
+function editMateria(id){ openModal('Editar Materia Prima',formMateria(getMat(id))); }
+function delMateria(id){ if(!confirm('¿Eliminar esta materia prima?'))return; DB.materias=DB.materias.filter(m=>m.id!==id); saveDB(); showModule('materias'); }
+function formMateria(m={}){
+  return `<div class="row g-3"><input type="hidden" id="fm-id" value="${m.id||''}"/>
+    <div class="col-6"><label class="form-label">Código</label><input class="form-control" id="fm-codigo" value="${m.codigo||''}"/></div>
+    <div class="col-6"><label class="form-label">Nombre</label><input class="form-control" id="fm-nombre" value="${m.nombre||''}"/></div>
+    <div class="col-6"><label class="form-label">Unidad de Medida</label>
+      <select class="form-select" id="fm-unidad">${['kg','g','L','ml','und','bolsa','atado','caja','lata'].map(u=>`<option ${(m.unidad||'')==u?'selected':''}>${u}</option>`).join('')}</select></div>
+    <div class="col-6"><label class="form-label">Costo Unitario (S/)</label><input class="form-control" type="number" step="0.01" id="fm-costo" value="${m.costo||''}"/></div>
+    <div class="col-12"><label class="form-label">Proveedor</label><input class="form-control" id="fm-proveedor" value="${m.proveedor||''}"/></div>
+    <div class="col-4"><label class="form-label">Stock Inicial</label><input class="form-control" type="number" step="0.001" id="fm-stock" value="${m.stock||0}"/></div>
+    <div class="col-4"><label class="form-label">Stock Mínimo</label><input class="form-control" type="number" step="0.001" id="fm-stockmin" value="${m.stock_min||0}"/></div>
+    <div class="col-4"><label class="form-label">Stock Máximo</label><input class="form-control" type="number" step="0.001" id="fm-stockmax" value="${m.stock_max||0}"/></div>
+    <div class="col-12 d-flex gap-2"><button class="btn-primary-custom" onclick="saveMateria()"><i class="bi bi-save"></i> Guardar</button><button class="btn-secondary-custom" onclick="closeModal()">Cancelar</button></div>
+  </div>`;
+}
+function saveMateria(){
+  const xid=document.getElementById('fm-id').value||uid();
+  const obj={id:xid,codigo:document.getElementById('fm-codigo').value,nombre:document.getElementById('fm-nombre').value,unidad:document.getElementById('fm-unidad').value,costo:+document.getElementById('fm-costo').value,proveedor:document.getElementById('fm-proveedor').value,stock:+document.getElementById('fm-stock').value,stock_min:+document.getElementById('fm-stockmin').value,stock_max:+document.getElementById('fm-stockmax').value};
+  const idx=DB.materias.findIndex(m=>m.id===xid);
+  if(idx>=0)DB.materias[idx]=obj; else{ DB.materias.push(obj); if(!DB.kardex[xid])DB.kardex[xid]=[]; if(obj.stock>0)DB.kardex[xid].push({lote:1,fecha:new Date().toISOString().slice(0,10),cantidad:obj.stock,costo:obj.costo,disponible:obj.stock}); }
+  saveDB(); closeModal(); showModule('materias');
+}
+function movMateria(id,tipo){
+  const m=getMat(id);
+  openModal((tipo==='entrada'?'Entrada':'Salida')+' — '+m.nombre,`
+    <div class="row g-3">
+      <div class="col-12"><label class="form-label">Cantidad (${m.unidad})</label><input class="form-control" type="number" step="0.001" id="mv-qty" placeholder="0"/></div>
+      ${tipo==='entrada'?`<div class="col-12"><label class="form-label">Costo unitario S/</label><input class="form-control" type="number" step="0.01" id="mv-costo" value="${m.costo}"/></div>`:''}
+      <div class="col-12 d-flex gap-2">
+        <button class="btn-primary-custom" onclick="doMov('${id}','${tipo}')"><i class="bi bi-save"></i> Registrar</button>
+        <button class="btn-secondary-custom" onclick="closeModal()">Cancelar</button>
+      </div>
+    </div>`);
+}
+function doMov(mid,tipo){
+  const qty=+document.getElementById('mv-qty').value; if(!qty||qty<=0)return alert('Ingresa una cantidad válida.');
+  const m=getMat(mid);
+  if(tipo==='entrada'){
+    const costo=+document.getElementById('mv-costo').value;
+    const lotes=DB.kardex[mid]||[];
+    lotes.push({lote:lotes.length+1,fecha:new Date().toISOString().slice(0,10),cantidad:qty,costo,disponible:qty});
+    DB.kardex[mid]=lotes; m.stock+=qty; m.costo=costo;
+  } else {
+    let restante=qty;
+    if((DB.kardex[mid]||[]).reduce((s,l)=>s+l.disponible,0)<qty)return alert('Stock insuficiente.');
+    (DB.kardex[mid]||[]).forEach(l=>{ if(restante<=0)return; const d=Math.min(l.disponible,restante); l.disponible-=d; restante-=d; });
+    m.stock=Math.max(0,m.stock-qty);
+  }
+  const idx=DB.materias.findIndex(x=>x.id===mid);
+  if(idx>=0)DB.materias[idx]=m;
+  saveDB(); closeModal(); showModule('materias');
+}
+
+// ══════════════════════════════════════════
+//  RECETARIO
+// ══════════════════════════════════════════
+function renderRecetas(){
+  if(DB.recetas.length===0){
+    return `<div class="d-flex justify-content-end mb-4"><button class="btn-primary-custom" onclick="newReceta()"><i class="bi bi-plus"></i> Nueva Receta</button></div><div class="card"><div class="card-body-p">${emptyState('📋','No hay recetas registradas.','Crear primera receta','newReceta()')}</div></div>`;
+  }
+  const cards=DB.recetas.map(r=>`
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span class="card-title-lg">🍽️ ${r.nombre} <span class="badge-soft badge-primary ms-2">v${r.version}</span></span>
+        <div class="d-flex gap-2">
+          <button class="btn-secondary-custom" onclick="editReceta('${r.id}')"><i class="bi bi-pencil"></i> Editar</button>
+          <button class="btn-danger-custom" onclick="delReceta('${r.id}')"><i class="bi bi-trash3"></i></button>
+        </div>
+      </div>
+      <div class="card-body-p">
+        <table class="table-clean" style="font-size:.82rem">
+          <thead><tr><th>Ingrediente</th><th>U.M.</th><th class="text-end">Cantidad/und</th><th class="text-end">Costo unit.</th><th class="text-end">Costo ing.</th></tr></thead>
+          <tbody>${(r.ingredientes||[]).map(ing=>{ const mp=getMat(ing.materia_id); return `<tr><td>${mp.nombre||'?'}</td><td>${mp.unidad||''}</td><td class="text-end">${fmtN(ing.cantidad)}</td><td class="text-end">${fmt(mp.costo)}</td><td class="text-end fw-bold">${fmt(ing.cantidad*mp.costo)}</td></tr>`; }).join('')}</tbody>
+        </table>
+      </div>
+    </div>`).join('');
+  return `<div class="d-flex justify-content-end mb-4"><button class="btn-primary-custom" onclick="newReceta()"><i class="bi bi-plus"></i> Nueva Receta</button></div>${cards}`;
+}
+function newReceta(){ openModal('Nueva Receta',formReceta()); }
+function editReceta(id){ openModal('Editar Receta',formReceta(getRec(id))); }
+function delReceta(id){ if(!confirm('¿Eliminar esta receta?'))return; DB.recetas=DB.recetas.filter(r=>r.id!==id); saveDB(); showModule('recetas'); }
+function formReceta(r={}){
+  const ings=(r.ingredientes||[]);
+  const ingsHTML=ings.map((ing,i)=>{ const mp=getMat(ing.materia_id); return `<div class="ing-row d-flex gap-2 mb-2" data-idx="${i}">
+    <select class="form-select" style="flex:2" id="ing-mat-${i}">${DB.materias.map(m=>`<option value="${m.id}" ${m.id===ing.materia_id?'selected':''}>${m.nombre} (${m.unidad})</option>`).join('')}</select>
+    <input type="number" step="0.0001" class="form-control" style="flex:1" id="ing-qty-${i}" value="${ing.cantidad}" placeholder="Cant."/>
+    <button class="btn-danger-custom" onclick="this.closest('.ing-row').remove()" type="button"><i class="bi bi-x"></i></button>
+  </div>`; }).join('');
+  return `<input type="hidden" id="fr-id" value="${r.id||''}"/>
+    <input type="hidden" id="fr-ver" value="${r.version||1}"/>
+    <div class="row g-3 mb-3">
+      <div class="col-8"><label class="form-label">Nombre del Producto</label><input class="form-control" id="fr-nombre" value="${r.nombre||''}"/></div>
+      <div class="col-4"><label class="form-label">Versión</label><input class="form-control" type="number" id="fr-version" value="${r.version||1}"/></div>
+    </div>
+    <label class="form-label">Ingredientes (por unidad de producto)</label>
+    <div id="ings-container">${DB.materias.length===0?'<p class="text-muted small">Agrega materias primas primero.</p>':ingsHTML}</div>
+    ${DB.materias.length>0?`<button class="btn-secondary-custom mb-3 mt-1" type="button" onclick="addIngRow()"><i class="bi bi-plus"></i> Agregar ingrediente</button>`:''}
+    <div class="d-flex gap-2"><button class="btn-primary-custom" onclick="saveReceta()"><i class="bi bi-save"></i> Guardar</button><button class="btn-secondary-custom" onclick="closeModal()">Cancelar</button></div>`;
+}
+function addIngRow(){
+  const container=document.getElementById('ings-container');
+  const i=container.querySelectorAll('.ing-row').length;
+  const div=document.createElement('div');
+  div.className='ing-row d-flex gap-2 mb-2'; div.setAttribute('data-idx',i);
+  div.innerHTML=`<select class="form-select" style="flex:2" id="ing-mat-${i}">${DB.materias.map(m=>`<option value="${m.id}">${m.nombre} (${m.unidad})</option>`).join('')}</select><input type="number" step="0.0001" class="form-control" style="flex:1" id="ing-qty-${i}" placeholder="Cant."/><button class="btn-danger-custom" onclick="this.closest('.ing-row').remove()" type="button"><i class="bi bi-x"></i></button>`;
+  container.appendChild(div);
+}
+function saveReceta(){
+  const xid=document.getElementById('fr-id').value||uid();
+  const rows=document.querySelectorAll('#ings-container .ing-row');
+  const ingredientes=[];
+  rows.forEach((row,i)=>{
+    const sel=row.querySelector('select'); const qty=row.querySelector('input[type=number]');
+    if(sel&&qty&&+qty.value>0) ingredientes.push({materia_id:sel.value,cantidad:+qty.value});
+  });
+  const obj={id:xid,nombre:document.getElementById('fr-nombre').value,version:+document.getElementById('fr-version').value,ingredientes};
+  const idx=DB.recetas.findIndex(r=>r.id===xid);
+  if(idx>=0)DB.recetas[idx]=obj; else DB.recetas.push(obj);
+  saveDB(); closeModal(); showModule('recetas');
+}
+
+// ══════════════════════════════════════════
+//  VENTAS
+// ══════════════════════════════════════════
+function renderVentas(){
+  if(DB.recetas.length===0) return `<div class="card"><div class="card-body-p">${emptyState('📊','Crea recetas antes de proyectar ventas.','Ir a Recetario',"showModule('recetas')")}</div></div>`;
+  if(DB.ventas.length===0){
+    return `<div class="d-flex justify-content-end mb-4"><button class="btn-primary-custom" onclick="newVenta()"><i class="bi bi-plus"></i> Nueva Proyección</button></div><div class="card"><div class="card-body-p">${emptyState('📊','No hay proyecciones de venta.','Agregar proyección','newVenta()')}</div></div>`;
+  }
+  let rows=DB.ventas.map(v=>`<tr><td><strong>${v.producto}</strong></td><td><span class="badge-soft badge-primary">${v.periodo}</span></td><td class="text-end">${v.cantidad.toLocaleString()}</td><td>${getRec(v.receta_id).nombre||'—'}</td>
+    <td><button class="btn-icon text-accent" onclick="editVenta('${v.id}')"><i class="bi bi-pencil"></i></button><button class="btn-icon" style="color:#ef4444" onclick="delVenta('${v.id}')"><i class="bi bi-trash3"></i></button></td></tr>`).join('');
+  return `<div class="d-flex justify-content-end mb-3"><button class="btn-primary-custom" onclick="newVenta()"><i class="bi bi-plus"></i> Nueva Proyección</button></div>
+  <div class="card" style="overflow-x:auto"><table class="table-clean"><thead><tr><th>Producto</th><th>Periodo</th><th class="text-end">Cantidad</th><th>Receta</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function newVenta(){ openModal('Nueva Proyección de Ventas',formVenta()); }
+function editVenta(id){ openModal('Editar Proyección',formVenta(DB.ventas.find(v=>v.id===id)||{})); }
+function delVenta(id){ if(!confirm('¿Eliminar?'))return; DB.ventas=DB.ventas.filter(v=>v.id!==id); saveDB(); showModule('ventas'); }
+function formVenta(v={}){
+  return `<input type="hidden" id="fv-id" value="${v.id||''}"/><div class="row g-3">
+    <div class="col-12"><label class="form-label">Nombre del Producto</label><input class="form-control" id="fv-prod" value="${v.producto||''}"/></div>
+    <div class="col-6"><label class="form-label">Receta asociada</label><select class="form-select" id="fv-rec">${DB.recetas.map(r=>`<option value="${r.id}" ${r.id===v.receta_id?'selected':''}>${r.nombre}</option>`).join('')}</select></div>
+    <div class="col-6"><label class="form-label">Período</label><select class="form-select" id="fv-per">${['Diario','Semanal','Mensual'].map(p=>`<option ${p===v.periodo?'selected':''}>${p}</option>`).join('')}</select></div>
+    <div class="col-12"><label class="form-label">Cantidad Proyectada</label><input class="form-control" type="number" id="fv-qty" value="${v.cantidad||''}"/></div>
+    <div class="col-12 d-flex gap-2"><button class="btn-primary-custom" onclick="saveVenta()"><i class="bi bi-save"></i> Guardar</button><button class="btn-secondary-custom" onclick="closeModal()">Cancelar</button></div>
+  </div>`;
+}
+function saveVenta(){
+  const xid=document.getElementById('fv-id').value||uid();
+  const obj={id:xid,producto:document.getElementById('fv-prod').value,receta_id:document.getElementById('fv-rec').value,periodo:document.getElementById('fv-per').value,cantidad:+document.getElementById('fv-qty').value};
+  const idx=DB.ventas.findIndex(v=>v.id===xid);
+  if(idx>=0)DB.ventas[idx]=obj; else DB.ventas.push(obj);
+  saveDB(); closeModal(); showModule('ventas');
+}
+
+// ══════════════════════════════════════════
+//  REQUERIMIENTOS MRP
+// ══════════════════════════════════════════
+function renderRequerimientos(){
+  if(DB.ventas.length===0) return `<div class="card"><div class="card-body-p">${emptyState('🔢','Agrega proyecciones de venta para calcular requerimientos.','Ir a Proyección',"showModule('ventas')")}</div></div>`;
+  const merma=getMermaPct();
+  const req={};
+  DB.ventas.forEach(v=>{ const rec=getRec(v.receta_id); if(!rec.ingredientes)return; rec.ingredientes.forEach(ing=>{ const mp=getMat(ing.materia_id); const qt=ing.cantidad*v.cantidad; const qa=qt*(1+merma/100); if(!req[ing.materia_id])req[ing.materia_id]={mp,teorico:0,ajustado:0}; req[ing.materia_id].teorico+=qt; req[ing.materia_id].ajustado+=qa; }); });
+  const rows=Object.values(req).map(r=>{ const comprar=Math.max(0,r.ajustado-(r.mp.stock||0)); return `<tr><td><strong>${r.mp.nombre}</strong></td><td class="text-end">${fmtN(r.teorico)} ${r.mp.unidad}</td><td class="text-end text-accent2 fw-bold">${fmtN(r.ajustado)} ${r.mp.unidad}</td><td class="text-end">${r.mp.stock} ${r.mp.unidad}</td><td class="text-end ${comprar>0?'text-danger-c fw-bold':''}">${fmtN(comprar)} ${r.mp.unidad}</td><td class="text-end">${comprar>0?fmt(comprar*r.mp.costo):'—'}</td><td><span class="badge-soft ${comprar>0?'badge-danger':'badge-success'}">${comprar>0?'Comprar':'OK'}</span></td></tr>`; }).join('');
+  const total_compras=Object.values(req).reduce((s,r)=>s+Math.max(0,r.ajustado-(r.mp.stock||0))*r.mp.costo,0);
+  const catMerma=getMermaCategoria();
+  return `<div class="formula-box mb-4"><div class="formula-title">📐 Fórmula MRP con Merma</div>Req. Ajustado = Req. Teórico × (1 + ${merma}% merma) &nbsp;|&nbsp; A Comprar = Req. Ajustado − Stock</div>
+  <div class="card" style="overflow-x:auto">
+    <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-list-check me-2"></i>Plan de Compras — Merma: ${catMerma.icon} ${catMerma.nombre} (${merma}%)</span><span class="fw-bold text-accent">Total: ${fmt(total_compras)}</span></div>
+    <table class="table-clean"><thead><tr><th>Materia Prima</th><th class="text-end">Req. Teórico</th><th class="text-end">Req. c/Merma</th><th class="text-end">Stock Actual</th><th class="text-end">A Comprar</th><th class="text-end">Costo</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+//  MOD
+// ══════════════════════════════════════════
+function renderMOD(){
+  const DIAS=DB.config.dias_laborables, HORAS=DB.config.jornada;
+  if(DB.mod_trabajadores.length===0){
+    return `<div class="d-flex justify-content-end mb-4"><button class="btn-primary-custom" onclick="newTrab()"><i class="bi bi-plus"></i> Nuevo Trabajador</button></div><div class="card"><div class="card-body-p">${emptyState('👷','No hay trabajadores registrados.','Agregar trabajador','newTrab()')}</div></div>`;
+  }
+  const rows=DB.mod_trabajadores.map(w=>{ const base=w.sueldo*w.n; const costo_mes=(base*(12+2+1+1)+base*12*0.09)/12; const costo_hora=costo_mes/(DIAS*HORAS); return `<tr><td><strong>${w.cargo}</strong></td><td class="text-end">${w.n}</td><td class="text-end">${fmt(w.sueldo)}</td><td class="text-end">${fmt(base)}</td><td class="text-end text-accent2 fw-bold">${fmt(costo_mes)}</td><td class="text-end">${fmt(costo_hora)}</td><td class="text-end">${fmt(costo_hora/60)}</td>
+    <td><button class="btn-icon text-accent" onclick="editTrab('${w.id}')"><i class="bi bi-pencil"></i></button><button class="btn-icon" style="color:#ef4444" onclick="delTrab('${w.id}')"><i class="bi bi-trash3"></i></button></td></tr>`; }).join('');
+  const total=calcCostoMOD();
+  return `<div class="formula-box mb-4"><div class="formula-title">📐 Costo Real MOD (Beneficios Peruanos)</div>Costo Anual = Sueldo×N×(12+2 Grat.+1 CTS+1 Vac.) + (Sueldo×N×12×9% EsSalud) &nbsp;|&nbsp; Costo/Hora = Costo Mes ÷ (${DIAS}d × ${HORAS}h)</div>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="kpi-card" style="--kpi-color:#f59e0b;min-width:200px"><div class="kpi-icon"><i class="bi bi-people-fill"></i></div><div class="kpi-value">${fmt(total)}</div><div class="kpi-label">Total MOD Mensual</div></div>
+    <button class="btn-primary-custom" onclick="newTrab()"><i class="bi bi-plus"></i> Nuevo Trabajador</button>
+  </div>
+  <div class="card" style="overflow-x:auto"><table class="table-clean"><thead><tr><th>Cargo</th><th class="text-end">N°</th><th class="text-end">Sueldo Base</th><th class="text-end">Base Total</th><th class="text-end">Costo Real/Mes</th><th class="text-end">Costo/Hora</th><th class="text-end">Costo/Min</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function newTrab(){ openModal('Nuevo Trabajador',formTrab()); }
+function editTrab(id){ openModal('Editar Trabajador',formTrab(DB.mod_trabajadores.find(w=>w.id===id)||{})); }
+function delTrab(id){ if(!confirm('¿Eliminar?'))return; DB.mod_trabajadores=DB.mod_trabajadores.filter(w=>w.id!==id); saveDB(); showModule('mod'); }
+function formTrab(w={}){
+  return `<input type="hidden" id="fw-id" value="${w.id||''}"/><div class="row g-3">
+    <div class="col-12"><label class="form-label">Cargo</label><input class="form-control" id="fw-cargo" value="${w.cargo||''}"/></div>
+    <div class="col-6"><label class="form-label">Sueldo Mensual (S/)</label><input class="form-control" type="number" id="fw-sueldo" value="${w.sueldo||''}"/></div>
+    <div class="col-6"><label class="form-label">N° Trabajadores</label><input class="form-control" type="number" id="fw-n" value="${w.n||1}"/></div>
+    <div class="col-12 d-flex gap-2"><button class="btn-primary-custom" onclick="saveTrab()"><i class="bi bi-save"></i> Guardar</button><button class="btn-secondary-custom" onclick="closeModal()">Cancelar</button></div>
+  </div>`;
+}
+function saveTrab(){
+  const xid=document.getElementById('fw-id').value||uid();
+  const obj={id:xid,cargo:document.getElementById('fw-cargo').value,sueldo:+document.getElementById('fw-sueldo').value,n:+document.getElementById('fw-n').value,horas:DB.config.jornada};
+  const idx=DB.mod_trabajadores.findIndex(w=>w.id===xid);
+  if(idx>=0)DB.mod_trabajadores[idx]=obj; else DB.mod_trabajadores.push(obj);
+  saveDB(); closeModal(); showModule('mod');
+}
+
+// ══════════════════════════════════════════
+//  CIF
+// ══════════════════════════════════════════
+function renderCIF(){
+  if(DB.cif_items.length===0){
+    return `<div class="d-flex justify-content-end mb-4"><button class="btn-primary-custom" onclick="newCIF()"><i class="bi bi-plus"></i> Nuevo CIF</button></div><div class="card"><div class="card-body-p">${emptyState('🏢','No hay costos indirectos registrados.','Agregar CIF','newCIF()')}</div></div>`;
+  }
+  const total=calcCIFTotal(); const und=calcUnidadesTotales()||1;
+  const rows=DB.cif_items.map(c=>`<tr><td><strong>${c.concepto}</strong></td><td><span class="badge-soft ${c.tipo==='Fijo'?'badge-primary':'badge-warning'}">${c.tipo}</span></td><td class="text-end fw-bold">${fmt(c.monto)}</td><td><button class="btn-icon text-accent" onclick="editCIF('${c.id}')"><i class="bi bi-pencil"></i></button><button class="btn-icon" style="color:#ef4444" onclick="delCIF('${c.id}')"><i class="bi bi-trash3"></i></button></td></tr>`).join('');
+  return `<div class="formula-box mb-4"><div class="formula-title">📐 Distribución CIF</div>CIF Unitario = CIF Total ÷ Total Unidades Proyectadas</div>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="kpi-card" style="--kpi-color:#8b5cf6;min-width:220px"><div class="kpi-icon"><i class="bi bi-building-fill"></i></div><div class="kpi-value">${fmt(total)}</div><div class="kpi-label">CIF Total Mensual · ${fmt(total/und)}/und</div></div>
+    <button class="btn-primary-custom" onclick="newCIF()"><i class="bi bi-plus"></i> Nuevo CIF</button>
+  </div>
+  <div class="card" style="overflow-x:auto"><table class="table-clean"><thead><tr><th>Concepto</th><th>Tipo</th><th class="text-end">Monto/Mes</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody><tfoot><tr style="background:#f8fafc"><td colspan="2"><strong>TOTAL</strong></td><td class="text-end fw-bold">${fmt(total)}</td><td></td></tr></tfoot></table></div>`;
+}
+function newCIF(){ openModal('Nuevo CIF',formCIF()); }
+function editCIF(id){ openModal('Editar CIF',formCIF(DB.cif_items.find(c=>c.id===id)||{})); }
+function delCIF(id){ if(!confirm('¿Eliminar?'))return; DB.cif_items=DB.cif_items.filter(c=>c.id!==id); saveDB(); showModule('cif'); }
+function formCIF(c={}){
+  return `<input type="hidden" id="fc-id" value="${c.id||''}"/><div class="row g-3">
+    <div class="col-12"><label class="form-label">Concepto</label><input class="form-control" id="fc-concepto" value="${c.concepto||''}"/></div>
+    <div class="col-6"><label class="form-label">Tipo</label><select class="form-select" id="fc-tipo"><option ${c.tipo==='Fijo'?'selected':''}>Fijo</option><option ${c.tipo==='Variable'?'selected':''}>Variable</option></select></div>
+    <div class="col-6"><label class="form-label">Monto Mensual (S/)</label><input class="form-control" type="number" id="fc-monto" value="${c.monto||''}"/></div>
+    <div class="col-12 d-flex gap-2"><button class="btn-primary-custom" onclick="saveCIF()"><i class="bi bi-save"></i> Guardar</button><button class="btn-secondary-custom" onclick="closeModal()">Cancelar</button></div>
+  </div>`;
+}
+function saveCIF(){
+  const xid=document.getElementById('fc-id').value||uid();
+  const obj={id:xid,concepto:document.getElementById('fc-concepto').value,tipo:document.getElementById('fc-tipo').value,monto:+document.getElementById('fc-monto').value};
+  const idx=DB.cif_items.findIndex(c=>c.id===xid);
+  if(idx>=0)DB.cif_items[idx]=obj; else DB.cif_items.push(obj);
+  saveDB(); closeModal(); showModule('cif');
+}
+
+// ══════════════════════════════════════════
+//  HOJA DE COSTEO
+// ══════════════════════════════════════════
+function renderCosteo(){
+  if(DB.ventas.length===0) return `<div class="card"><div class="card-body-p">${emptyState('🧮','Agrega proyecciones de venta para ver el costeo.','Ir a Proyección',"showModule('ventas')")}</div></div>`;
+  const merma=getMermaPct(); const total_und=calcUnidadesTotales();
+  const catMerma=getMermaCategoria();
+  const cards=DB.ventas.map(v=>{
+    const c=calcCostoUnitario(v.receta_id,v.cantidad,merma);
+    const pM=c.total?(c.mpd/c.total*100):0,pO=c.total?(c.mod/c.total*100):0,pC=c.total?(c.cif/c.total*100):0;
+    const rec=getRec(v.receta_id);
+    const ingTable=(rec.ingredientes||[]).map(ing=>{ const mp=getMat(ing.materia_id); const qa=ing.cantidad*v.cantidad*(1+merma/100); return `<tr><td>${mp.nombre||'?'}</td><td class="text-end">${fmtN(ing.cantidad)} ${mp.unidad}</td><td class="text-end text-accent2">${fmtN(qa)} ${mp.unidad}</td><td class="text-end">${fmt(mp.costo)}</td><td class="text-end fw-bold">${fmt(qa*mp.costo)}</td></tr>`; }).join('');
+    return `<div class="card mb-4">
+      <div class="card-header-custom" style="background:var(--primary);border-radius:13px 13px 0 0">
+        <div><span style="color:#fff;font-weight:800;font-size:1rem">🍽️ ${v.producto}</span><span style="color:rgba(255,255,255,.5);font-size:.78rem;margin-left:10px">${v.cantidad.toLocaleString()} und · ${catMerma.icon} Merma: ${merma}%</span></div>
+        <span style="color:var(--accent2);font-size:1.25rem;font-weight:800">${fmt(c.unitario)}/und</span>
+      </div>
+      <div class="card-body-p"><div class="row g-4">
+        <div class="col-md-6">
+          <div style="font-weight:700;font-size:.75rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">MPD — Materiales Directos</div>
+          <div style="overflow-x:auto"><table class="table-clean" style="font-size:.79rem"><thead><tr><th>Ingrediente</th><th class="text-end">Por und</th><th class="text-end">c/Merma</th><th class="text-end">Costo</th><th class="text-end">Total</th></tr></thead><tbody>${ingTable}</tbody></table></div>
+        </div>
+        <div class="col-md-6">
+          <div style="font-weight:700;font-size:.75rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Resumen de Costos</div>
+          <div class="price-stack">
+            <div class="price-row"><div><div class="price-label">MPD — Materia Prima Directa</div></div><div class="price-val" style="color:#3b82f6">${fmt(c.mpd)}</div></div>
+            <div class="price-row"><div><div class="price-label">MOD — Mano de Obra Directa</div><div style="font-size:.7rem;color:var(--text-muted)">Dist. ${v.cantidad}/${total_und} und</div></div><div class="price-val" style="color:#f59e0b">${fmt(c.mod)}</div></div>
+            <div class="price-row"><div><div class="price-label">CIF — Costos Indirectos</div></div><div class="price-val" style="color:#8b5cf6">${fmt(c.cif)}</div></div>
+            <div class="price-row" style="background:#f1f5f9"><div><div class="price-label fw-bold">COSTO TOTAL PRODUCCIÓN</div></div><div class="price-val">${fmt(c.total)}</div></div>
+            <div class="price-row highlight"><div><div class="price-label">COSTO UNITARIO</div></div><div class="price-val" style="color:var(--accent2)">${fmt(c.unitario)}</div></div>
+          </div>
+          <div class="d-flex gap-3 mt-2" style="font-size:.7rem"><span style="color:#3b82f6">● MPD ${pM.toFixed(0)}%</span><span style="color:#f59e0b">● MOD ${pO.toFixed(0)}%</span><span style="color:#8b5cf6">● CIF ${pC.toFixed(0)}%</span></div>
+        </div>
+      </div>
+      <div class="formula-box mt-3"><div class="formula-title">📐 Fórmula</div><strong>Costo Total</strong> = MPD (${fmt(c.mpd)}) + MOD (${fmt(c.mod)}) + CIF (${fmt(c.cif)}) = <strong>${fmt(c.total)}</strong> &nbsp;|&nbsp; <strong>C. Unitario</strong> = ${fmt(c.total)} ÷ ${v.cantidad} = <strong>${fmt(c.unitario)}</strong></div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="mb-3 d-flex align-items-center gap-2"><span style="font-size:.83rem;color:var(--text-muted)">Categoría de merma activa:</span><span class="badge-soft badge-purple">${catMerma.icon} ${catMerma.nombre} — ${merma}%</span><a href="#" onclick="showModule('mermas')" style="font-size:.8rem">Cambiar</a></div>${cards}`;
+}
+
+// ══════════════════════════════════════════
+//  PRECIOS
+// ══════════════════════════════════════════
+function renderPrecios(){
+  if(DB.ventas.length===0) return `<div class="card"><div class="card-body-p">${emptyState('🏷️','Agrega proyecciones de venta para calcular precios.','Ir a Proyección',"showModule('ventas')")}</div></div>`;
+  const igv=DB.config.igv, pos=DB.config.pos_rate;
+  const cards=DB.ventas.map(v=>{
+    const c=calcCostoUnitario(v.receta_id,v.cantidad,getMermaPct());
+    return `<div class="card mb-4">
+      <div class="card-header-custom"><span class="card-title-lg">🍽️ ${v.producto}</span><span class="badge-soft badge-primary">C. Unit: ${fmt(c.unitario)}</span></div>
+      <div class="card-body-p"><div class="row g-4 align-items-start">
+        <div class="col-md-4">
+          <label class="form-label">Rentabilidad Esperada (%)</label>
+          <input type="range" class="form-range" min="5" max="80" step="1" value="35" oninput="updatePrecio('${v.id}',${c.unitario},this.value)"/>
+          <div class="text-center fw-bold" id="rent-label-${v.id}" style="font-size:1.3rem;color:var(--accent)">35%</div>
+          <div class="formula-box mt-2"><div class="formula-title">📐 Fórmulas</div>VV = C.Unit ÷ (1−R%) &nbsp;|&nbsp; PV = VV×(1+${igv}%) &nbsp;|&nbsp; PPOS = PV×(1+(${pos}%×(1+${igv}%)))</div>
+        </div>
+        <div class="col-md-8"><div class="price-stack" id="precio-stack-${v.id}">${buildPrecioStack(c.unitario,35)}</div></div>
+      </div></div>
+    </div>`;
+  }).join('');
+  return `<div class="mb-3" style="font-size:.83rem;color:var(--text-muted)">Mueve el slider para recalcular automáticamente todos los precios.</div>${cards}`;
+}
+function buildPrecioStack(costo,rent){
+  const p=calcPrecios(costo,rent);
+  return `
+  <div class="price-row"><div><div class="price-label">Costo Unitario (MPD+MOD+CIF)</div></div><div class="price-val" style="color:#ef4444">${fmt(p.costo_unit)}</div></div>
+  <div class="price-row" style="background:#fff7ed"><div><div class="price-label">Valor de Venta</div><div style="font-size:.7rem;color:var(--text-muted)">${fmt(p.costo_unit)} ÷ (1−${rent}%)</div></div><div class="price-val" style="color:#f59e0b">${fmt(p.valor_venta)}</div></div>
+  <div class="price-row" style="background:#f0fdf4"><div><div class="price-label">IGV (${DB.config.igv}%)</div></div><div class="price-val" style="color:#10b981">${fmt(p.igv_monto)}</div></div>
+  <div class="price-row" style="background:#eff6ff"><div><div class="price-label">Precio de Venta</div></div><div class="price-val" style="color:#3b82f6">${fmt(p.precio_venta)}</div></div>
+  <div class="price-row" style="background:#faf5ff"><div><div class="price-label">Comisión POS (${DB.config.pos_rate}%+IGV)</div></div><div class="price-val" style="color:#7c3aed">${fmt(p.comision_pos)}</div></div>
+  <div class="price-row highlight"><div><div class="price-label">PRECIO CON POS (Cobrar al cliente)</div></div><div class="price-val" style="color:var(--accent2)">${fmt(p.precio_pos)}</div></div>
+  <div class="price-row" style="background:#f0fdf4"><div><div class="price-label">Utilidad Unitaria</div></div><div class="price-val text-success-c">${fmt(p.utilidad_unit)} <span style="font-size:.8rem">(${pct(p.utilidad_pct)})</span></div></div>`;
+}
+function updatePrecio(vid,costo,rent){
+  document.getElementById('rent-label-'+vid).textContent=rent+'%';
+  document.getElementById('precio-stack-'+vid).innerHTML=buildPrecioStack(costo,+rent);
+}
+
+// ══════════════════════════════════════════
+//  KARDEX PEPS
+// ══════════════════════════════════════════
+function renderKardex(){
+  if(DB.materias.length===0) return `<div class="card"><div class="card-body-p">${emptyState('📋','No hay materias primas para mostrar en el kardex.','Ir a Materias Primas',"showModule('materias')")}</div></div>`;
+  return `<div class="formula-box mb-4"><div class="formula-title">📐 Método PEPS (FIFO)</div>Las salidas consumen primero los lotes más antiguos. El saldo refleja el costo de los lotes disponibles.</div>
+  <div class="card mb-4"><div class="card-body-p"><label class="form-label">Seleccionar Materia Prima</label>
+    <select class="form-select" id="kardex-select" onchange="renderKardexTable(this.value)">${DB.materias.map(m=>`<option value="${m.id}">${m.nombre} (${m.unidad})</option>`).join('')}</select>
+  </div></div>
+  <div id="kardex-table-area"></div>`;
+}
+window.__init_kardex=function(){ if(DB.materias[0])renderKardexTable(DB.materias[0].id); };
+function renderKardexTable(mid){
+  const m=getMat(mid); const lotes=DB.kardex[mid]||[];
+  const val=lotes.reduce((s,l)=>s+l.disponible*l.costo,0);
+  const rows=lotes.map(l=>{ const ag=l.disponible<=0; return `<tr style="${ag?'opacity:.45;text-decoration:line-through':''}"><td>Lote #${l.lote}</td><td>${l.fecha}</td><td class="text-end">${fmtN(l.cantidad)}</td><td class="text-end">${fmt(l.costo)}</td><td class="text-end fw-bold" style="color:${ag?'#ef4444':'#10b981'}">${fmtN(l.disponible)}</td><td class="text-end fw-bold">${fmt(l.disponible*l.costo)}</td><td><span class="badge-soft ${ag?'badge-danger':'badge-success'}">${ag?'Agotado':'Disponible'}</span></td></tr>`; }).join('');
+  document.getElementById('kardex-table-area').innerHTML=`<div class="card" style="overflow-x:auto"><div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-card-list me-2"></i>Kardex PEPS — ${m.nombre}</span><span class="fw-bold text-accent2">Valorizado: ${fmt(val)}</span></div>
+  <table class="table-clean kardex-table"><thead><tr><th>Lote</th><th>Fecha</th><th class="text-end">Cantidad</th><th class="text-end">Costo Unit.</th><th class="text-end">Disponible</th><th class="text-end">Valor</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="text-center" style="color:var(--text-muted);padding:20px">Sin movimientos</td></tr>'}</tbody></table></div>`;
+}
+
+// ══════════════════════════════════════════
+//  MERMAS POR CATEGORÍA GASTRONÓMICA
+// ══════════════════════════════════════════
+function renderMermas(){
+  const catActiva=getMermaCategoria();
+  const merma=getMermaPct();
+
+  const catCards=MERMA_CATEGORIAS.map(cat=>`
+    <div class="merma-cat-card ${cat.id===DB.config.merma_categoria?'active-cat':''}" onclick="selectMermaCategoria('${cat.id}')">
+      <div class="merma-cat-icon">${cat.icon}</div>
+      <div class="merma-cat-name">${cat.nombre}</div>
+      <div class="merma-cat-pct" id="pct-${cat.id}">${cat.id===DB.config.merma_categoria?merma:cat.pct}%</div>
+      <div class="merma-cat-desc">${cat.desc}</div>
+    </div>`).join('');
+
+  const rows=DB.ventas.length>0?DB.ventas.map(v=>{
+    const rec=getRec(v.receta_id);
+    return (rec.ingredientes||[]).map(ing=>{ const mp=getMat(ing.materia_id); const qt=ing.cantidad*v.cantidad; const qm=qt*(merma/100); return `<tr><td>${v.producto}</td><td>${mp.nombre}</td><td class="text-end">${fmtN(qt)} ${mp.unidad}</td><td class="text-end text-danger-c">${fmtN(qm)} ${mp.unidad}</td><td class="text-end fw-bold">${fmtN(qt+qm)} ${mp.unidad}</td><td class="text-end text-danger-c">${fmt(qm*mp.costo)}</td></tr>`; }).join('');
+  }).join(''):'<tr><td colspan="6" class="text-center" style="color:var(--text-muted);padding:20px">Sin proyecciones de venta</td></tr>';
+
+  return `
+  <div class="formula-box mb-4"><div class="formula-title">📐 Fórmula de Merma</div>
+    <strong>Consumo Ajustado</strong> = Consumo Teórico × (1 + % Merma) &nbsp;|&nbsp; La categoría define el % recomendado según tipo de insumo.
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-grid me-2"></i>Categorías de Merma Gastronómica</span>
+      <span class="badge-soft badge-purple">Activa: ${catActiva.icon} ${catActiva.nombre} — ${merma}%</span>
+    </div>
+    <div class="card-body-p">
+      <div class="merma-cat-grid">${catCards}</div>
+      <div id="merma-cat-config" style="${DB.config.merma_categoria==='custom'?'':'display:none'}">
+        <div class="row g-3 mt-2">
+          <div class="col-md-4"><label class="form-label">Porcentaje personalizado (%)</label>
+            <input class="form-control" type="number" step="0.1" min="0" max="100" id="custom-merma-pct" value="${merma}"/>
+          </div>
+          <div class="col-md-4 d-flex align-items-end"><button class="btn-primary-custom" onclick="saveCustomMerma()"><i class="bi bi-save"></i> Aplicar</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="overflow-x:auto">
+    <div class="card-header-custom">
+      <span class="card-title-lg"><i class="bi bi-exclamation-triangle me-2"></i>Detalle de Mermas — ${catActiva.icon} ${merma}%</span>
+    </div>
+    <table class="table-clean"><thead><tr><th>Producto</th><th>Ingrediente</th><th class="text-end">Consumo Teórico</th><th class="text-end">Merma</th><th class="text-end">Consumo Ajustado</th><th class="text-end">Costo Merma</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+function selectMermaCategoria(catId){
+  const cat=MERMA_CATEGORIAS.find(c=>c.id===catId);
+  DB.config.merma_categoria=catId;
+  if(catId!=='custom') DB.config.merma_default=cat.pct;
+  saveDB();
+  showModule('mermas');
+}
+function saveCustomMerma(){
+  const pct=+document.getElementById('custom-merma-pct').value;
+  if(pct<0||pct>100)return alert('Ingresa un porcentaje entre 0 y 100.');
+  DB.config.merma_default=pct;
+  saveDB();
+  showModule('mermas');
+}
+
+// ══════════════════════════════════════════
+//  EXTEND MODULES ROUTER
+// ══════════════════════════════════════════
+Object.assign(MODULES,{
+  pedidos:     {title:'Pedidos',                   render:renderPedidos},
+  comprobantes:{title:'Boletas y Facturas',         render:renderComprobantes},
+  reportes:    {title:'Reportes Gerenciales',       render:renderReportes},
+});
+
+// ══════════════════════════════════════════
+//  PEDIDOS
+// ══════════════════════════════════════════
+/*  Estructura pedido:
+    { id, fecha, cliente, tipo_doc:'Boleta'|'Factura', ruc_razon:'', items:[{producto,cantidad,precio_unit,igv_unit,total}], subtotal, igv_total, total, estado:'Pendiente'|'Completado'|'Anulado' }
+*/
+if(!DB.pedidos) DB.pedidos=[];
+
+function renderPedidos(){
+  const pendientes=DB.pedidos.filter(p=>p.estado==='Pendiente').length;
+  const completados=DB.pedidos.filter(p=>p.estado==='Completado').length;
+  const ingresos=DB.pedidos.filter(p=>p.estado==='Completado').reduce((s,p)=>s+p.total,0);
+
+  const badgeColor={Pendiente:'badge-warning',Completado:'badge-success',Anulado:'badge-danger'};
+
+  const rows=DB.pedidos.length===0
+    ?`<tr><td colspan="8" class="text-center" style="color:var(--text-muted);padding:30px">Sin pedidos registrados aún</td></tr>`
+    :[...DB.pedidos].reverse().map(p=>`<tr>
+        <td><code style="font-size:.72rem">${p.id.slice(-6).toUpperCase()}</code></td>
+        <td>${p.fecha}</td>
+        <td><strong>${p.cliente}</strong></td>
+        <td><span class="badge-soft badge-primary">${p.tipo_doc}</span></td>
+        <td class="text-end fw-bold">${fmt(p.total)}</td>
+        <td><span class="badge-soft ${badgeColor[p.estado]||'badge-primary'}">${p.estado}</span></td>
+        <td>
+          ${p.estado==='Pendiente'?`<button class="btn-icon text-success-c" onclick="completarPedido('${p.id}')" title="Completar"><i class="bi bi-check-circle"></i></button>`:''}
+          <button class="btn-icon text-accent" onclick="verPedido('${p.id}')" title="Ver detalle"><i class="bi bi-eye"></i></button>
+          <button class="btn-icon" onclick="emitirComprobante('${p.id}')" title="Emitir comprobante" style="color:#8b5cf6"><i class="bi bi-receipt"></i></button>
+          ${p.estado!=='Anulado'?`<button class="btn-icon" style="color:#ef4444" onclick="anularPedido('${p.id}')" title="Anular"><i class="bi bi-x-circle"></i></button>`:''}
+        </td>
+      </tr>`).join('');
+
+  return `
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#f59e0b"><div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div><div class="kpi-value">${pendientes}</div><div class="kpi-label">Pendientes</div></div>
+    <div class="kpi-card" style="--kpi-color:#10b981"><div class="kpi-icon"><i class="bi bi-check2-all"></i></div><div class="kpi-value">${completados}</div><div class="kpi-label">Completados</div></div>
+    <div class="kpi-card" style="--kpi-color:#3b82f6"><div class="kpi-icon"><i class="bi bi-cash-stack"></i></div><div class="kpi-value">${fmt(ingresos)}</div><div class="kpi-label">Ingresos Totales</div></div>
+  </div>
+  <div class="d-flex justify-content-end mb-3">
+    <button class="btn-primary-custom" onclick="newPedido()"><i class="bi bi-plus"></i> Nuevo Pedido</button>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <table class="table-clean">
+      <thead><tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Comprobante</th><th class="text-end">Total</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function newPedido(){
+  if(DB.ventas.length===0) return alert('Primero agrega productos en Proyección de Ventas.');
+  const merma=getMermaPct();
+  const productosOpts=DB.ventas.map(v=>{
+    const c=calcCostoUnitario(v.receta_id,v.cantidad,merma);
+    const p=calcPrecios(c.unitario,35);
+    return `<option value="${v.id}" data-pv="${p.precio_venta.toFixed(2)}" data-pos="${p.precio_pos.toFixed(2)}">${v.producto}</option>`;
+  }).join('');
+
+  openModal('Nuevo Pedido',`
+    <div class="row g-3">
+      <div class="col-8"><label class="form-label">Nombre del Cliente</label><input class="form-control" id="np-cliente" placeholder="Nombre o razón social"/></div>
+      <div class="col-4"><label class="form-label">Tipo Comprobante</label>
+        <select class="form-select" id="np-tipo" onchange="toggleRUC()">
+          <option>Boleta</option><option>Factura</option><option>Nota de Venta</option>
+        </select>
+      </div>
+      <div class="col-12 hidden" id="np-ruc-row"><label class="form-label">RUC / Razón Social</label><input class="form-control" id="np-ruc" placeholder="20XXXXXXXXX — Razón Social SA"/></div>
+      <div class="col-12"><label class="form-label">Modalidad de Pago</label>
+        <select class="form-select" id="np-pago"><option>Efectivo</option><option>Tarjeta (POS)</option><option>Transferencia</option><option>Yape/Plin</option></select>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="fw-bold mb-2" style="font-size:.85rem">Ítems del Pedido</div>
+    <div id="np-items-container"></div>
+    <button class="btn-secondary-custom mt-2 mb-3" onclick="addItemPedido()"><i class="bi bi-plus"></i> Agregar ítem</button>
+    <div class="formula-box" id="np-totales" style="font-size:.82rem">Subtotal: S/ 0.00 &nbsp;|&nbsp; IGV: S/ 0.00 &nbsp;|&nbsp; <strong>Total: S/ 0.00</strong></div>
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn-primary-custom" onclick="savePedido()"><i class="bi bi-save"></i> Registrar Pedido</button>
+      <button class="btn-secondary-custom" onclick="closeModal()">Cancelar</button>
+    </div>
+    <script>
+      window._np_items=[];
+      const _prods=${JSON.stringify(DB.ventas.map(v=>{ const c=calcCostoUnitario(v.receta_id,v.cantidad,getMermaPct()); const p=calcPrecios(c.unitario,35); return {id:v.id,nombre:v.producto,pv:+p.precio_venta.toFixed(2),pp:+p.precio_pos.toFixed(2),igv:+DB.config.igv}; }))};
+      function addItemPedido(){
+        const idx=window._np_items.length;
+        window._np_items.push({});
+        const div=document.createElement('div');
+        div.className='row g-2 mb-2 np-item-row'; div.id='np-item-'+idx;
+        div.innerHTML=\`<div class="col-5"><select class="form-select form-select-sm" id="ni-prod-\${idx}" onchange="updateItemRow(\${idx})">${productOpts()}</select></div>
+          <div class="col-2"><input type="number" class="form-control form-control-sm" id="ni-qty-\${idx}" value="1" min="1" oninput="updateItemRow(\${idx})" placeholder="Cant."/></div>
+          <div class="col-3"><input type="number" class="form-control form-control-sm" id="ni-pu-\${idx}" step="0.01" oninput="recalcTotales()" placeholder="P. Unit S/"/></div>
+          <div class="col-2"><button class="btn-danger-custom w-100" style="padding:4px 8px;font-size:.75rem" onclick="document.getElementById('np-item-\${idx}').remove();recalcTotales()"><i class="bi bi-x"></i></button></div>\`;
+        document.getElementById('np-items-container').appendChild(div);
+        updateItemRow(idx);
+      }
+      function productOpts(){ return _prods.map(p=>\`<option value="\${p.id}">\${p.nombre}</option>\`).join(''); }
+      function updateItemRow(idx){
+        const sel=document.getElementById('ni-prod-'+idx); if(!sel)return;
+        const pago=document.getElementById('np-pago')?.value||'Efectivo';
+        const prod=_prods.find(p=>p.id===sel.value); if(!prod)return;
+        const pu=pago==='Tarjeta (POS)'?prod.pp:prod.pv;
+        const puEl=document.getElementById('ni-pu-'+idx); if(puEl)puEl.value=pu.toFixed(2);
+        recalcTotales();
+      }
+      function recalcTotales(){
+        let sub=0;
+        document.querySelectorAll('.np-item-row').forEach((row,idx)=>{
+          const qEl=row.querySelector('input[type=number]'); const pEl=row.querySelectorAll('input[type=number]')[1];
+          if(qEl&&pEl){ const q=+qEl.value||0,p=+pEl.value||0; sub+=q*p; }
+        });
+        const igvR=${DB.config.igv}/100; const igvM=sub-(sub/(1+igvR)); const tot=sub;
+        document.getElementById('np-totales').innerHTML=\`Subtotal (sin IGV): S/ \${(sub-igvM).toFixed(2)} &nbsp;|&nbsp; IGV: S/ \${igvM.toFixed(2)} &nbsp;|&nbsp; <strong>Total: S/ \${tot.toFixed(2)}</strong>\`;
+      }
+      document.getElementById('np-pago').addEventListener('change',()=>{ document.querySelectorAll('.np-item-row').forEach((r,i)=>updateItemRow(i)); });
+      addItemPedido();
+    <\/script>
+  `);
+}
+
+function toggleRUC(){
+  const t=document.getElementById('np-tipo')?.value;
+  const row=document.getElementById('np-ruc-row');
+  if(row) row.classList.toggle('hidden', t!=='Factura');
+}
+
+function savePedido(){
+  const cliente=document.getElementById('np-cliente')?.value?.trim();
+  if(!cliente) return alert('Ingresa el nombre del cliente.');
+  const tipo=document.getElementById('np-tipo')?.value||'Boleta';
+  const ruc=tipo==='Factura'?(document.getElementById('np-ruc')?.value||''):'';
+  const pago=document.getElementById('np-pago')?.value||'Efectivo';
+  const igvR=DB.config.igv/100;
+  const items=[]; let sub=0;
+  document.querySelectorAll('.np-item-row').forEach(row=>{
+    const sel=row.querySelector('select');
+    const inputs=row.querySelectorAll('input[type=number]');
+    if(!sel||inputs.length<2) return;
+    const vid=sel.value; const v=DB.ventas.find(x=>x.id===vid); if(!v) return;
+    const qty=+inputs[0].value||0; const pu=+inputs[1].value||0;
+    if(qty>0 && pu>0){ const tot=qty*pu; sub+=tot; items.push({producto:v.producto,cantidad:qty,precio_unit:pu,total:tot}); }
+  });
+  if(items.length===0) return alert('Agrega al menos un ítem.');
+  const igv_total=sub-(sub/(1+igvR));
+  const pedido={ id:uid(), fecha:new Date().toISOString().slice(0,10), cliente, tipo_doc:tipo, ruc_razon:ruc, pago, items, subtotal:+(sub-igv_total).toFixed(2), igv_total:+igv_total.toFixed(2), total:+sub.toFixed(2), estado:'Pendiente', comprobante_num:null };
+  if(!DB.pedidos) DB.pedidos=[];
+  DB.pedidos.push(pedido); saveDB(); closeModal(); showModule('pedidos');
+}
+
+function completarPedido(id){
+  const p=DB.pedidos.find(x=>x.id===id); if(!p) return;
+  p.estado='Completado'; saveDB(); showModule('pedidos');
+}
+function anularPedido(id){
+  if(!confirm('¿Anular este pedido?')) return;
+  const p=DB.pedidos.find(x=>x.id===id); if(!p) return;
+  p.estado='Anulado'; saveDB(); showModule('pedidos');
+}
+function verPedido(id){
+  const p=DB.pedidos.find(x=>x.id===id); if(!p) return;
+  const rows=p.items.map(it=>`<tr><td>${it.producto}</td><td class="text-end">${it.cantidad}</td><td class="text-end">${fmt(it.precio_unit)}</td><td class="text-end fw-bold">${fmt(it.total)}</td></tr>`).join('');
+  openModal('Detalle Pedido — '+p.cliente,`
+    <div class="row g-2 mb-3" style="font-size:.82rem">
+      <div class="col-6"><strong>Cliente:</strong> ${p.cliente}</div>
+      <div class="col-6"><strong>Fecha:</strong> ${p.fecha}</div>
+      <div class="col-6"><strong>Comprobante:</strong> ${p.tipo_doc}</div>
+      <div class="col-6"><strong>Pago:</strong> ${p.pago}</div>
+      <div class="col-6"><strong>Estado:</strong> <span class="badge-soft ${p.estado==='Completado'?'badge-success':p.estado==='Anulado'?'badge-danger':'badge-warning'}">${p.estado}</span></div>
+      ${p.ruc_razon?`<div class="col-12"><strong>RUC/Razón:</strong> ${p.ruc_razon}</div>`:''}
+    </div>
+    <table class="table-clean mb-3"><thead><tr><th>Producto</th><th class="text-end">Cant.</th><th class="text-end">P. Unit.</th><th class="text-end">Total</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="formula-box" style="font-size:.82rem">
+      Subtotal (sin IGV): <strong>${fmt(p.subtotal)}</strong> &nbsp;|&nbsp; IGV (${DB.config.igv}%): <strong>${fmt(p.igv_total)}</strong> &nbsp;|&nbsp; <strong>TOTAL: ${fmt(p.total)}</strong>
+    </div>
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn-primary-custom" onclick="emitirComprobante('${id}');closeModal()"><i class="bi bi-receipt"></i> Emitir ${p.tipo_doc}</button>
+      <button class="btn-secondary-custom" onclick="closeModal()">Cerrar</button>
+    </div>`);
+}
+function emitirComprobante(pid){
+  const p=DB.pedidos.find(x=>x.id===pid); if(!p) return;
+  if(!DB.comprobantes) DB.comprobantes=[];
+  const serie=p.tipo_doc==='Factura'?'F001':'B001';
+  const num=String(DB.comprobantes.filter(c=>c.tipo===p.tipo_doc).length+1).padStart(8,'0');
+  const num_comp=`${serie}-${num}`;
+  if(!DB.comprobantes.find(c=>c.pedido_id===pid)){
+    DB.comprobantes.push({id:uid(),pedido_id:pid,tipo:p.tipo_doc,serie,numero:num,num_comp,fecha:new Date().toISOString().slice(0,10),cliente:p.cliente,ruc_razon:p.ruc_razon,items:p.items,subtotal:p.subtotal,igv_total:p.igv_total,total:p.total,estado:'Emitido'});
+  }
+  p.comprobante_num=num_comp; saveDB();
+  showModule('comprobantes');
+}
+
+// ══════════════════════════════════════════
+//  COMPROBANTES
+// ══════════════════════════════════════════
+if(!DB.comprobantes) DB.comprobantes=[];
+
+function renderComprobantes(){
+  const totalBoletas=DB.comprobantes.filter(c=>c.tipo==='Boleta').length;
+  const totalFacturas=DB.comprobantes.filter(c=>c.tipo==='Factura').length;
+  const totalEmitido=DB.comprobantes.reduce((s,c)=>s+c.total,0);
+
+  const rows=DB.comprobantes.length===0
+    ?`<tr><td colspan="7" class="text-center" style="color:var(--text-muted);padding:30px">Sin comprobantes emitidos</td></tr>`
+    :[...DB.comprobantes].reverse().map(c=>`<tr>
+        <td><strong>${c.num_comp}</strong></td>
+        <td>${c.fecha}</td>
+        <td><span class="badge-soft ${c.tipo==='Factura'?'badge-primary':'badge-success'}">${c.tipo}</span></td>
+        <td>${c.cliente}</td>
+        <td>${c.ruc_razon||'—'}</td>
+        <td class="text-end fw-bold">${fmt(c.total)}</td>
+        <td>
+          <button class="btn-icon text-accent" onclick="imprimirComprobante('${c.id}')" title="Imprimir / Ver"><i class="bi bi-printer"></i></button>
+        </td>
+      </tr>`).join('');
+
+  return `
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#10b981"><div class="kpi-icon"><i class="bi bi-file-earmark-check"></i></div><div class="kpi-value">${totalBoletas}</div><div class="kpi-label">Boletas Emitidas</div></div>
+    <div class="kpi-card" style="--kpi-color:#3b82f6"><div class="kpi-icon"><i class="bi bi-file-earmark-text"></i></div><div class="kpi-value">${totalFacturas}</div><div class="kpi-label">Facturas Emitidas</div></div>
+    <div class="kpi-card" style="--kpi-color:#8b5cf6"><div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div><div class="kpi-value">${fmt(totalEmitido)}</div><div class="kpi-label">Total Emitido</div></div>
+  </div>
+  <div class="formula-box mb-4">
+    <div class="formula-title">ℹ️ Integración SUNAT</div>
+    Para emisión electrónica real, conecta un OSE (Nubefact, Efact, FACTURALO.PE) via API REST. Este módulo genera la estructura del comprobante lista para enviar al OSE de tu elección.
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-receipt me-2"></i>Comprobantes Emitidos</span></div>
+    <table class="table-clean">
+      <thead><tr><th>N° Comprobante</th><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>RUC/Razón</th><th class="text-end">Total</th><th>Acciones</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function imprimirComprobante(cid){
+  const c=DB.comprobantes.find(x=>x.id===cid); if(!c) return;
+  const rows=c.items.map(it=>`<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${it.producto}</td><td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${it.cantidad}</td><td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">S/ ${it.precio_unit.toFixed(2)}</td><td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:bold">S/ ${it.total.toFixed(2)}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${c.num_comp}</title>
+  <style>body{font-family:'Courier New',monospace;max-width:380px;margin:20px auto;font-size:13px}h2{text-align:center;font-size:16px}p{margin:3px 0}.line{border-top:1px dashed #000;margin:8px 0}table{width:100%;border-collapse:collapse}.total-box{background:#f0f0f0;padding:8px;border-radius:4px;margin-top:8px}@media print{body{margin:0}}</style>
+  </head><body>
+  <h2>${c.tipo.toUpperCase()}</h2>
+  <p style="text-align:center;font-size:11px">${DB.config.empresa} · RUC: ${DB.config.ruc||'00000000000'}</p>
+  <div class="line"></div>
+  <p><strong>${c.num_comp}</strong></p>
+  <p>Fecha: ${c.fecha}</p>
+  <p>Cliente: ${c.cliente}</p>
+  ${c.ruc_razon?`<p>RUC/Razón: ${c.ruc_razon}</p>`:''}
+  <div class="line"></div>
+  <table><thead><tr><th style="text-align:left;padding:4px 8px">Descripción</th><th style="text-align:right;padding:4px 8px">Cant.</th><th style="text-align:right;padding:4px 8px">P.U.</th><th style="text-align:right;padding:4px 8px">Total</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="line"></div>
+  <div class="total-box">
+    <p>Subtotal (sin IGV): <strong>S/ ${c.subtotal.toFixed(2)}</strong></p>
+    <p>IGV (${DB.config.igv}%): <strong>S/ ${c.igv_total.toFixed(2)}</strong></p>
+    <p style="font-size:15px">TOTAL: <strong>S/ ${c.total.toFixed(2)}</strong></p>
+  </div>
+  <div class="line"></div>
+  <p style="text-align:center;font-size:10px">Representación impresa de ${c.tipo} Electrónica</p>
+  <p style="text-align:center;font-size:10px">Autorizado por SUNAT</p>
+  <script>window.print();<\/script>
+  </body></html>`;
+  const win=window.open('','_blank'); win.document.write(html); win.document.close();
+}
+
+// ══════════════════════════════════════════
+//  REPORTES GERENCIALES
+// ══════════════════════════════════════════
+function renderReportes(){
+  const merma=getMermaPct();
+  const catMerma=getMermaCategoria();
+
+  // Resumen costos
+  let totalMPD=0,totalMOD=calcCostoMOD(),totalCIF=calcCIFTotal(),totalCosto=0;
+  const filasProductos=DB.ventas.map(v=>{
+    const c=calcCostoUnitario(v.receta_id,v.cantidad,merma);
+    const p=calcPrecios(c.unitario,35);
+    totalMPD+=c.mpd; totalCosto+=c.total;
+    return {v,c,p};
+  });
+  const totalVentas=DB.pedidos.filter(p=>p.estado==='Completado').reduce((s,p)=>s+p.total,0);
+  const totalUnd=calcUnidadesTotales();
+  const alertas=DB.materias.filter(m=>m.stock<=m.stock_min);
+  const valorInventario=DB.materias.reduce((s,m)=>s+m.stock*m.costo,0);
+
+  // Rentabilidad por producto
+  const rentRows=filasProductos.map(({v,c,p})=>{
+    const bar=c.total?(c.mpd/c.total*100):0;
+    return `<tr>
+      <td><strong>${v.producto}</strong></td>
+      <td class="text-end">${v.cantidad.toLocaleString()}</td>
+      <td class="text-end text-danger-c">${fmt(c.unitario)}</td>
+      <td class="text-end">${fmt(p.valor_venta)}</td>
+      <td class="text-end">${fmt(p.precio_venta)}</td>
+      <td class="text-end text-success-c fw-bold">${fmt(p.utilidad_unit)}</td>
+      <td class="text-end"><span class="badge-soft ${p.utilidad_pct>30?'badge-success':p.utilidad_pct>15?'badge-warning':'badge-danger'}">${pct(p.utilidad_pct)}</span></td>
+      <td><div class="progress-bar-custom"><div class="progress-fill" style="width:${Math.min(p.utilidad_pct,100)}%;background:#10b981"></div></div></td>
+    </tr>`;
+  }).join('');
+
+  // Reporte MOD
+  const DIAS=DB.config.dias_laborables, HORAS=DB.config.jornada;
+  const modRows=DB.mod_trabajadores.map(w=>{ const base=w.sueldo*w.n; const cm=(base*(12+2+1+1)+base*12*0.09)/12; const ch=cm/(DIAS*HORAS); return `<tr><td>${w.cargo}</td><td class="text-end">${w.n}</td><td class="text-end">${fmt(w.sueldo)}</td><td class="text-end">${fmt(cm)}</td><td class="text-end">${fmt(ch)}</td></tr>`; }).join('');
+
+  // Reporte CIF
+  const cifRows=DB.cif_items.map(c=>`<tr><td>${c.concepto}</td><td><span class="badge-soft ${c.tipo==='Fijo'?'badge-primary':'badge-warning'}">${c.tipo}</span></td><td class="text-end fw-bold">${fmt(c.monto)}</td><td class="text-end">${fmt(totalUnd?c.monto/totalUnd:0)}</td></tr>`).join('');
+
+  // Mermas detalle
+  let mermaRows='',costoMermaTotal=0;
+  DB.ventas.forEach(v=>{ const rec=getRec(v.receta_id); (rec.ingredientes||[]).forEach(ing=>{ const mp=getMat(ing.materia_id); const qt=ing.cantidad*v.cantidad; const qm=qt*(merma/100); costoMermaTotal+=qm*mp.costo; mermaRows+=`<tr><td>${v.producto}</td><td>${mp.nombre}</td><td class="text-end">${fmtN(qm)} ${mp.unidad}</td><td class="text-end text-danger-c">${fmt(qm*mp.costo)}</td></tr>`; }); });
+
+  // Ventas reales
+  const ventasRows=DB.pedidos.filter(p=>p.estado==='Completado').slice(-10).reverse().map(p=>`<tr><td><code style="font-size:.72rem">${(p.comprobante_num||p.id.slice(-6).toUpperCase())}</code></td><td>${p.fecha}</td><td>${p.cliente}</td><td class="text-end fw-bold">${fmt(p.total)}</td></tr>`).join('');
+
+  return `
+  <!-- KPIs Resumen -->
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#3b82f6"><div class="kpi-icon"><i class="bi bi-boxes"></i></div><div class="kpi-value">${totalUnd.toLocaleString()}</div><div class="kpi-label">Und. Proyectadas</div></div>
+    <div class="kpi-card" style="--kpi-color:#ef4444"><div class="kpi-icon"><i class="bi bi-receipt"></i></div><div class="kpi-value">${fmt(totalCosto)}</div><div class="kpi-label">Costo Total Producción</div></div>
+    <div class="kpi-card" style="--kpi-color:#10b981"><div class="kpi-icon"><i class="bi bi-cash-stack"></i></div><div class="kpi-value">${fmt(totalVentas)}</div><div class="kpi-label">Ventas Reales</div></div>
+    <div class="kpi-card" style="--kpi-color:#f59e0b"><div class="kpi-icon"><i class="bi bi-people"></i></div><div class="kpi-value">${fmt(totalMOD)}</div><div class="kpi-label">MOD Mensual</div></div>
+    <div class="kpi-card" style="--kpi-color:#8b5cf6"><div class="kpi-icon"><i class="bi bi-building"></i></div><div class="kpi-value">${fmt(totalCIF)}</div><div class="kpi-label">CIF Mensual</div></div>
+    <div class="kpi-card" style="--kpi-color:#0ea5e9"><div class="kpi-icon"><i class="bi bi-archive"></i></div><div class="kpi-value">${fmt(valorInventario)}</div><div class="kpi-label">Inventario Valorizado</div></div>
+  </div>
+
+  <!-- Alertas -->
+  ${alertas.length>0?`<div class="mb-4">${alertas.map(a=>`<div class="alert-stock mb-2"><i class="bi bi-exclamation-triangle-fill"></i> <strong>${a.nombre}</strong> — Stock: ${a.stock} ${a.unidad} (Mín: ${a.stock_min})</div>`).join('')}</div>`:''}
+
+  <!-- Tabs de reportes -->
+  <div class="section-tabs">
+    <button class="section-tab active" onclick="switchReporte(event,'rp-rentabilidad')">Rentabilidad</button>
+    <button class="section-tab" onclick="switchReporte(event,'rp-mod')">MOD</button>
+    <button class="section-tab" onclick="switchReporte(event,'rp-cif')">CIF</button>
+    <button class="section-tab" onclick="switchReporte(event,'rp-mermas')">Mermas</button>
+    <button class="section-tab" onclick="switchReporte(event,'rp-ventas')">Ventas Reales</button>
+  </div>
+
+  <!-- Rentabilidad -->
+  <div id="rp-rentabilidad">
+    <div class="card" style="overflow-x:auto">
+      <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-bar-chart me-2"></i>Rentabilidad por Producto</span><span class="badge-soft badge-purple">${catMerma.icon} Merma: ${merma}%</span></div>
+      <table class="table-clean"><thead><tr><th>Producto</th><th class="text-end">Und.</th><th class="text-end">C. Unitario</th><th class="text-end">Valor Venta</th><th class="text-end">P. Venta</th><th class="text-end">Utilidad</th><th class="text-end">Margen</th><th style="min-width:80px">Barra</th></tr></thead>
+      <tbody>${rentRows||'<tr><td colspan="8" class="text-center" style="color:var(--text-muted);padding:20px">Sin datos</td></tr>'}</tbody></table>
+    </div>
+    <div class="formula-box mt-3"><div class="formula-title">📐 Estructura de Costos</div>MPD: <strong>${fmt(totalMPD)}</strong> + MOD: <strong>${fmt(totalMOD)}</strong> + CIF: <strong>${fmt(totalCIF)}</strong> = Costo Total: <strong>${fmt(totalCosto)}</strong></div>
+  </div>
+
+  <!-- MOD -->
+  <div id="rp-mod" class="hidden">
+    <div class="card" style="overflow-x:auto">
+      <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-people me-2"></i>Reporte Mano de Obra Directa</span><span class="fw-bold">${fmt(totalMOD)}/mes</span></div>
+      <table class="table-clean"><thead><tr><th>Cargo</th><th class="text-end">N°</th><th class="text-end">Sueldo Base</th><th class="text-end">Costo Real/Mes</th><th class="text-end">Costo/Hora</th></tr></thead>
+      <tbody>${modRows||'<tr><td colspan="5" class="text-center" style="color:var(--text-muted);padding:20px">Sin trabajadores registrados</td></tr>'}</tbody>
+      <tfoot><tr style="background:#f8fafc"><td colspan="3"><strong>TOTAL MOD</strong></td><td class="text-end fw-bold">${fmt(totalMOD)}</td><td></td></tr></tfoot>
+      </table>
+    </div>
+    <div class="formula-box mt-3"><div class="formula-title">📐 Beneficios incluidos</div>Gratificaciones (Jul/Dic) · CTS · Vacaciones (15 días) · EsSalud 9% — Jornada: ${HORAS}h/día × ${DIAS} días/mes</div>
+  </div>
+
+  <!-- CIF -->
+  <div id="rp-cif" class="hidden">
+    <div class="card" style="overflow-x:auto">
+      <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-building me-2"></i>Reporte CIF</span><span class="fw-bold">${fmt(totalCIF)}/mes</span></div>
+      <table class="table-clean"><thead><tr><th>Concepto</th><th>Tipo</th><th class="text-end">Monto/Mes</th><th class="text-end">Por Unidad</th></tr></thead>
+      <tbody>${cifRows||'<tr><td colspan="4" class="text-center" style="color:var(--text-muted);padding:20px">Sin CIF registrado</td></tr>'}</tbody>
+      <tfoot><tr style="background:#f8fafc"><td colspan="2"><strong>TOTAL CIF</strong></td><td class="text-end fw-bold">${fmt(totalCIF)}</td><td class="text-end fw-bold">${fmt(totalUnd?totalCIF/totalUnd:0)}/und</td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- MERMAS -->
+  <div id="rp-mermas" class="hidden">
+    <div class="card" style="overflow-x:auto">
+      <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-exclamation-triangle me-2"></i>Reporte de Mermas</span><span class="badge-soft badge-danger">Costo merma: ${fmt(costoMermaTotal)}</span></div>
+      <table class="table-clean"><thead><tr><th>Producto</th><th>Ingrediente</th><th class="text-end">Merma (cant.)</th><th class="text-end">Costo Merma</th></tr></thead>
+      <tbody>${mermaRows||'<tr><td colspan="4" class="text-center" style="color:var(--text-muted);padding:20px">Sin datos</td></tr>'}</tbody>
+      <tfoot><tr style="background:#fef2f2"><td colspan="3"><strong>TOTAL COSTO MERMA</strong></td><td class="text-end fw-bold text-danger-c">${fmt(costoMermaTotal)}</td></tr></tfoot>
+      </table>
+    </div>
+    <div class="formula-box mt-3"><div class="formula-title">📐 Categoría activa</div>${catMerma.icon} <strong>${catMerma.nombre}</strong> — ${merma}% aplicado a todos los ingredientes</div>
+  </div>
+
+  <!-- VENTAS REALES -->
+  <div id="rp-ventas" class="hidden">
+    <div class="card" style="overflow-x:auto">
+      <div class="card-header-custom"><span class="card-title-lg"><i class="bi bi-cash-stack me-2"></i>Últimas Ventas Completadas</span><span class="fw-bold text-success-c">${fmt(totalVentas)}</span></div>
+      <table class="table-clean"><thead><tr><th>Comprobante</th><th>Fecha</th><th>Cliente</th><th class="text-end">Total</th></tr></thead>
+      <tbody>${ventasRows||'<tr><td colspan="4" class="text-center" style="color:var(--text-muted);padding:20px">Sin ventas completadas</td></tr>'}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function switchReporte(e,id){
+  document.querySelectorAll('[id^="rp-"]').forEach(el=>el.classList.add('hidden'));
+  document.querySelectorAll('.section-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.remove('hidden');
+  e.target.classList.add('active');
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+window.addEventListener('load',()=>{ document.getElementById('inp-user').focus(); });
+</script>
+</body>
+</html>
